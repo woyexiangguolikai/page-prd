@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-platform="web">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>智宇CRM · 原型 + 需求说明</title>
+<style>
+:root{
+  --primary:#2563EB;
+  --primary-weak:#EFF6FF;
+  --primary-line:#BFDBFE;
+  --ink:#0F172A;
+  --ink-2:#475569;
+  --ink-3:#94A3B8;
+  --line:#E2E8F0;
+  --line-2:#F1F5F9;
+  --bg:#EEF2F7;
+  --panel:#FFFFFF;
+  --danger:#DC2626;
+  --warn-bg:#FFFBEB;
+  --warn-line:#F59E0B;
+  --radius:8px;
+  --topbar-h:54px;
+  --prd-w:468px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--ink);background:var(--bg);font-size:13px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:12px;cursor:pointer}
+
+/* ================= 图标系统 ================= */
+.svg-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{
+  width:1em;height:1em;display:inline-block;vertical-align:-0.14em;
+  fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;
+}
+.ic.fill{fill:currentColor;stroke:none}
+
+/* ================= 顶栏 ================= */
+#topbar{
+  height:var(--topbar-h);display:flex;align-items:center;gap:16px;
+  padding:0 16px;background:#fff;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:100;
+}
+.tb-left{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.tb-sys{font-weight:700;font-size:14px;letter-spacing:.2px}
+.tb-tag{
+  font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600;
+  background:var(--primary-weak);color:var(--primary);border:1px solid var(--primary-line);
+}
+.tb-hint{display:flex;gap:14px;flex:1 1 auto;overflow:hidden;flex-wrap:wrap;max-height:34px}
+.tb-hint span{font-size:11px;color:var(--danger);white-space:nowrap;opacity:.9}
+.tb-hint span::before{content:"●";font-size:7px;vertical-align:2px;margin-right:4px;opacity:.7}
+.tb-right{display:flex;gap:8px;flex:0 0 auto}
+.btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  padding:5px 12px;border-radius:6px;transition:.15s;
+}
+.btn:hover{border-color:var(--primary-line);color:var(--primary);background:var(--primary-weak)}
+.btn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.on:hover{background:#1D4ED8;color:#fff}
+
+/* ================= 主体双栏 ================= */
+#split{display:flex;height:calc(100vh - var(--topbar-h))}
+#proto{flex:1 1 auto;min-width:0;overflow:auto;padding:26px}
+#proto::-webkit-scrollbar,#prd::-webkit-scrollbar{width:8px;height:8px}
+#proto::-webkit-scrollbar-thumb,#prd::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:4px}
+#prd{
+  flex:0 0 var(--prd-w);width:var(--prd-w);background:#fff;border-left:1px solid var(--line);
+  overflow-y:auto;overflow-x:hidden;padding:20px 20px 80px;
+}
+body.prd-hidden #prd{display:none}
+
+/* 收起 / 展开 悬浮按钮（贴在原型区右下角，不压住右侧说明） */
+#toggle-prd{
+  position:fixed;right:calc(var(--prd-w) + 20px);bottom:22px;z-index:200;
+  height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);box-shadow:0 4px 14px rgba(15,23,42,.14);
+  font-size:12px;font-weight:600;transition:.18s;
+}
+#toggle-prd:hover{color:var(--primary);border-color:var(--primary-line)}
+body.prd-hidden #toggle-prd{right:22px}
+
+/* ================= 原型窗口外壳 ================= */
+.page{display:none}
+.page.active{display:block}
+.win{
+  max-width:1320px;margin:0 auto;background:#fff;border:1px solid var(--line);
+  border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.06),0 18px 40px -18px rgba(15,23,42,.22);
+}
+.win-bar{
+  height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;
+  border-bottom:1px solid var(--line);background:#F8FAFC;
+}
+.win-dot{width:9px;height:9px;border-radius:50%}
+.win-dot:nth-child(1){background:#FCA5A5}
+.win-dot:nth-child(2){background:#FCD34D}
+.win-dot:nth-child(3){background:#86EFAC}
+.win-url{
+  flex:1;margin-left:10px;height:19px;border-radius:10px;background:#EDF2F8;
+  font-size:11px;color:var(--ink-3);line-height:19px;padding:0 10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.win-body{height:auto;min-height:430px;max-height:calc(100vh - 208px);overflow:auto;background:#fff}
+
+/* ---------- 布局 A：admin 后台 ---------- */
+.lay-admin{display:flex;min-height:430px;font-size:13px}
+.lay-admin .ad-side{
+  flex:0 0 196px;background:#0F172A;color:#CBD5E1;display:flex;flex-direction:column;
+}
+.lay-admin .ad-logo{
+  height:54px;display:flex;align-items:center;gap:8px;padding:0 16px;
+  font-weight:700;color:#fff;font-size:13px;border-bottom:1px solid rgba(255,255,255,.08);
+}
+.lay-admin .ad-logo i{
+  width:22px;height:22px;border-radius:6px;background:var(--primary);
+  display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;color:#fff;
+}
+.lay-admin .ad-nav{padding:8px;flex:1;overflow:auto}
+.ad-group{font-size:10px;color:#64748B;padding:10px 10px 4px;letter-spacing:.5px}
+.ad-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;
+  cursor:pointer;font-size:12.5px;color:#CBD5E1;transition:.13s;margin-bottom:2px;
+}
+.ad-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.ad-item.active{background:var(--primary);color:#fff;font-weight:600}
+.ad-item .ico{width:15px;height:15px;flex:0 0 auto;opacity:.92;font-size:15px;stroke-width:1.9}
+.lay-admin .ad-main{flex:1;min-width:0;display:flex;flex-direction:column;background:#F8FAFC}
+.ad-top{
+  height:54px;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex:0 0 auto;
+}
+.ad-crumb{font-size:12px;color:var(--ink-3)}
+.ad-crumb b{color:var(--ink);font-weight:600}
+.ad-user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.ad-avatar{width:26px;height:26px;border-radius:50%;background:var(--primary-weak);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.ad-content{flex:1;overflow:auto;padding:18px 20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px}
+.panel-head{padding:12px 16px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-weight:600;font-size:13px}
+.panel-body{padding:16px}
+
+/* 工具栏 / 表单控件 */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.field{display:flex;align-items:center;gap:6px}
+.field label{font-size:12px;color:var(--ink-2);white-space:nowrap}
+.input,.select{
+  height:30px;border:1px solid var(--line);border-radius:6px;padding:0 9px;
+  font-size:12px;color:var(--ink);background:#fff;outline:none;min-width:130px;
+  font-family:inherit;
+}
+.input:focus,.select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn-primary{
+  height:30px;padding:0 14px;border-radius:6px;border:1px solid var(--primary);
+  background:var(--primary);color:#fff;font-weight:500;
+}
+.btn-primary:hover{background:#1D4ED8}
+.btn-ghost{
+  height:30px;padding:0 14px;border-radius:6px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);
+}
+.btn-ghost:hover{border-color:var(--primary-line);color:var(--primary)}
+.btn-danger{height:30px;padding:0 12px;border-radius:6px;border:1px solid #FECACA;background:#fff;color:var(--danger)}
+
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{
+  text-align:left;font-weight:600;color:var(--ink-2);background:#F8FAFC;
+  padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px;
+}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line-2);color:var(--ink-2);vertical-align:middle}
+.tbl tbody tr:hover td{background:#FAFCFE}
+.tbl td.strong{color:var(--ink);font-weight:500}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;line-height:17px;border:1px solid transparent;white-space:nowrap}
+.tag-blue{background:var(--primary-weak);color:var(--primary);border-color:var(--primary-line)}
+.tag-green{background:#ECFDF5;color:#059669;border-color:#A7F3D0}
+.tag-amber{background:#FFFBEB;color:#B45309;border-color:#FDE68A}
+.tag-gray{background:#F1F5F9;color:#64748B;border-color:#E2E8F0}
+.tag-red{background:#FEF2F2;color:#DC2626;border-color:#FECACA}
+.link{color:var(--primary);cursor:pointer;font-size:12px}
+.link:hover{text-decoration:underline}
+.pager{display:flex;gap:4px;align-items:center;justify-content:flex-end;padding:12px 0 0;font-size:12px;color:var(--ink-3)}
+.pager b{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--ink-2);font-weight:400}
+.pager b.cur{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+
+/* ---------- 布局 B：portal 官网 / 门户 ---------- */
+.lay-portal{min-height:430px;overflow:auto;background:#fff}
+.pt-nav{
+  height:62px;display:flex;align-items:center;gap:28px;padding:0 40px;
+  border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5;
+}
+.pt-logo{font-weight:800;font-size:15px;letter-spacing:.3px;color:var(--ink)}
+.pt-logo i{color:var(--primary);font-style:normal}
+.pt-links{display:flex;gap:24px;flex:1}
+.pt-links a{font-size:13px;color:var(--ink-2);text-decoration:none;cursor:pointer;padding:4px 0;border-bottom:2px solid transparent}
+.pt-links a:hover{color:var(--primary)}
+.pt-links a.active{color:var(--primary);font-weight:600;border-bottom-color:var(--primary)}
+.pt-hero{
+  padding:64px 40px 56px;background:linear-gradient(160deg,#EFF6FF 0%,#F8FAFC 55%,#fff 100%);
+  text-align:center;
+}
+.pt-hero h1{margin:0 0 14px;font-size:32px;line-height:1.3;letter-spacing:-.4px}
+.pt-hero p{margin:0 auto 26px;max-width:560px;color:var(--ink-2);font-size:14px}
+.pt-cta{display:flex;gap:12px;justify-content:center}
+.pt-cta .btn-primary,.pt-cta .btn-ghost{height:38px;padding:0 22px;font-size:13px;border-radius:7px}
+.pt-sec{padding:44px 40px;max-width:1120px;margin:0 auto}
+.pt-sec h2{font-size:19px;margin:0 0 6px;letter-spacing:-.2px}
+.pt-sec .sub{color:var(--ink-3);font-size:13px;margin:0 0 26px}
+.pt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pt-card{border:1px solid var(--line);border-radius:10px;padding:22px;transition:.2s;background:#fff}
+.pt-card:hover{border-color:var(--primary-line);box-shadow:0 12px 26px -14px rgba(37,99,235,.4);transform:translateY(-2px)}
+.pt-card .ic{width:38px;height:38px;border-radius:9px;background:var(--primary-weak);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.pt-card h3{margin:0 0 7px;font-size:14px}
+.pt-card p{margin:0;color:var(--ink-2);font-size:12.5px;line-height:1.75}
+.pt-foot{padding:26px 40px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12px;text-align:center;background:#F8FAFC}
+
+/* ---------- 布局 C：plain 纯内容页 ---------- */
+.lay-plain{min-height:430px;display:flex;align-items:center;justify-content:center;background:#F8FAFC;padding:40px}
+.pl-card{width:376px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:32px;box-shadow:0 18px 44px -20px rgba(15,23,42,.24)}
+.pl-card h1{margin:0 0 6px;font-size:19px;letter-spacing:-.2px;text-align:center}
+.pl-card .sub{margin:0 0 26px;color:var(--ink-3);font-size:12.5px;text-align:center}
+.pl-item{margin-bottom:15px}
+.pl-item label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:5px}
+.pl-item .input{width:100%;height:36px}
+.pl-submit{width:100%;height:37px;margin-top:8px;border-radius:7px;border:1px solid var(--primary);background:var(--primary);color:#fff;font-size:13px;font-weight:500}
+.pl-foot{text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:18px}
+
+/* ---------- 弹窗（原型内） ---------- */
+.mask{
+  position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:900;
+  display:none;align-items:center;justify-content:center;
+}
+.mask.show{display:flex}
+.modal{
+  width:560px;max-width:92vw;background:#fff;border-radius:10px;overflow:hidden;
+  box-shadow:0 30px 70px -20px rgba(15,23,42,.6);
+}
+.modal-head{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.modal-head .x{cursor:pointer;color:var(--ink-3);font-size:17px;line-height:1}
+.modal-body{padding:20px;max-height:62vh;overflow:auto}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;background:#F8FAFC}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+.form-grid .it label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:5px}
+.form-grid .it label .req{color:var(--danger);margin-left:2px}
+.form-grid .it .input,.form-grid .it .select{width:100%;height:32px}
+.form-grid textarea{
+  width:100%;min-height:62px;border:1px solid var(--line);border-radius:6px;padding:8px 9px;
+  font-size:12px;font-family:inherit;outline:none;resize:vertical;color:var(--ink);
+}
+
+/* ---------- 编号气泡 ---------- */
+[data-fp]{position:relative}
+.fp-bubble{
+  position:absolute;top:-8px;right:-8px;left:auto;z-index:60;
+  min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+  background:var(--primary);color:#fff;font-size:10px;font-weight:700;
+  line-height:17px;text-align:center;cursor:pointer;user-select:none;
+  box-shadow:0 2px 7px rgba(37,99,235,.42);
+  border:1.5px solid #fff;transition:.15s;opacity:.82;
+}
+#proto:hover .fp-bubble{opacity:1}
+.fp-bubble:hover{transform:scale(1.16)}
+/* 手动指定气泡方位，覆盖自动判定 */
+[data-fp][data-fp-side="tl"] > .fp-bubble{top:-8px;left:-8px;right:auto}
+[data-fp][data-fp-side="bl"] > .fp-bubble{bottom:-8px;left:-8px;top:auto;right:auto}
+[data-fp][data-fp-side="br"] > .fp-bubble{bottom:-8px;right:-8px;top:auto;left:auto}
+[data-fp][data-fp-side="in"] > .fp-bubble{top:2px;right:2px;left:auto;opacity:.7}
+@keyframes fpFlash{
+  0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}
+  30%{box-shadow:0 0 0 4px rgba(37,99,235,.4)}
+}
+.fp-flash{animation:fpFlash 1.4s ease-out 2;border-radius:6px}
+tr.fp-flash td{background:#FFFBEB!important}
+
+/* ================= 右侧需求说明 ================= */
+.prd-title{
+  font-size:17px;font-weight:700;margin:0 0 3px;letter-spacing:-.2px;
+  padding-bottom:10px;border-bottom:2px solid var(--ink);
+}
+.prd-title .seq{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;
+  font-size:12px;margin-right:8px;vertical-align:1px;
+}
+.prd-sub{margin:8px 0 20px;color:var(--ink-3);font-size:12px;line-height:1.7}
+.sec{margin-bottom:24px}
+.sec-h{
+  font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--ink-3);
+  text-transform:uppercase;margin:0 0 11px;display:flex;align-items:center;gap:8px;
+}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec-h .del{
+  border:none;background:transparent;color:var(--ink-3);font-size:11px;
+  cursor:pointer;padding:0 4px;opacity:.6;
+}
+.sec-h .del:hover{color:var(--danger);opacity:1}
+
+/* 功能点卡片 */
+.fp-card{
+  border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;
+  background:#fff;overflow:hidden;transition:.16s;
+}
+.fp-card:hover{border-color:#CBD5E1}
+.fp-card.target{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.fp-card-head{
+  display:flex;align-items:center;gap:9px;padding:10px 12px;
+  background:#F8FAFC;cursor:pointer;user-select:none;
+}
+.fp-card-head .no{
+  flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.fp-card-head .nm{font-weight:600;font-size:13px;flex:1;color:var(--ink)}
+.fp-card-head .caret{color:var(--ink-3);font-size:10px;transition:.2s}
+.fp-card.collapsed .caret{transform:rotate(-90deg)}
+.fp-card.collapsed .fp-card-body{display:none}
+.fp-card-body{padding:14px;border-top:1px solid var(--line-2)}
+.fp-desc{margin:0 0 14px;color:var(--ink-2);font-size:12.5px;line-height:1.75}
+.sub-h{
+  font-size:11.5px;font-weight:700;color:var(--ink);margin:16px 0 8px;
+  display:flex;align-items:center;gap:6px;
+}
+.sub-h::before{content:"";width:3px;height:11px;border-radius:2px;background:var(--primary)}
+.sub-h:first-child{margin-top:0}
+
+/* 说明内表格 */
+.spec-tbl{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed}
+.spec-tbl.tight{font-size:10.5px}
+.spec-tbl.tight th,.spec-tbl.tight td{padding:5px 5px}
+.spec-tbl.tight th:nth-child(1),.spec-tbl.tight td:nth-child(1),
+.spec-tbl.tight th:nth-child(2),.spec-tbl.tight td:nth-child(2),
+.spec-tbl.tight th:nth-child(3),.spec-tbl.tight td:nth-child(3){white-space:nowrap}
+.tbl-wrap{overflow-x:auto;margin:0 -1px}
+.tbl-wrap .spec-tbl{min-width:300px}
+.spec-tbl th{
+  background:#F1F5F9;color:var(--ink-2);font-weight:600;font-size:11px;
+  padding:6px 8px;border:1px solid var(--line);text-align:left;white-space:nowrap;
+}
+.spec-tbl td{
+  padding:6px 8px;border:1px solid var(--line);color:var(--ink-2);vertical-align:top;
+  word-break:break-word;line-height:1.65;
+}
+.spec-tbl td.lock{background:#F8FAFC;color:var(--ink-2);position:relative;padding-right:20px}
+.spec-tbl td.lock::after{
+  content:"🔒";position:absolute;right:5px;top:5px;font-size:8px;opacity:.42;
+}
+.spec-tbl td.editable{cursor:text}
+body.editing .spec-tbl td.editable{
+  background:var(--warn-bg);box-shadow:inset 0 -1px 0 0 var(--warn-line);
+  outline:1px dashed rgba(245,158,11,.55);outline-offset:-3px;
+}
+body.editing .spec-tbl td.editable:focus{
+  background:#FEF3C7;outline:2px solid var(--warn-line);outline-offset:-2px;
+}
+body.editing .ed-block{
+  background:var(--warn-bg);outline:1px dashed rgba(245,158,11,.55);outline-offset:3px;
+  border-radius:3px;cursor:text;
+}
+body.editing .ed-block:focus{background:#FEF3C7;outline:2px solid var(--warn-line);outline-offset:2px}
+
+/* 规则 / 状态 列表 */
+.rules{margin:0;padding-left:0;list-style:none;counter-reset:r}
+.rules li{
+  position:relative;padding:5px 0 5px 22px;font-size:12.5px;color:var(--ink-2);
+  line-height:1.7;border-bottom:1px dashed var(--line-2);
+}
+.rules li:last-child{border-bottom:none}
+.rules li::before{
+  counter-increment:r;content:"R" counter(r);
+  position:absolute;left:0;top:6px;font-size:10px;font-weight:700;color:var(--primary);
+  background:var(--primary-weak);border-radius:4px;padding:0 4px;line-height:15px;
+}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0;padding:0;list-style:none}
+.flow li{
+  font-size:11.5px;padding:3px 9px;border-radius:12px;background:#F1F5F9;color:var(--ink-2);
+  border:1px solid var(--line);
+}
+.flow li.arrow{background:none;border:none;color:var(--ink-3);padding:0 1px}
+
+/* ---------- 布局说明 ---------- */
+.lay-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-2)}
+.lay-item:first-child{padding-top:0}
+.lay-item:last-child{border-bottom:none;padding-bottom:0}
+.lay-k{flex:0 0 68px;font-size:11.5px;color:var(--ink-3);line-height:1.7;white-space:nowrap}
+.lay-v{flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+
+/* ---------- 交互说明 ---------- */
+.ia-card{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff;overflow:hidden}
+.ia-h{padding:8px 12px;background:#F8FAFC;border-bottom:1px solid var(--line-2);font-weight:600;font-size:12.5px;color:var(--ink)}
+.ia-b{padding:10px 12px}
+.ia-row{display:flex;gap:8px;font-size:12px;margin-bottom:7px;line-height:1.65}
+.ia-row:last-child{margin-bottom:0}
+.ia-row b{flex:0 0 58px;color:var(--ink-3);font-weight:400}
+.ia-row span{flex:1;min-width:0;color:var(--ink-2)}
+
+/* ---------- 前置条件 ---------- */
+.pre{display:flex;gap:8px;align-items:flex-start;background:#F8FAFC;border-left:3px solid #94A3B8;border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:12px;font-size:12px;line-height:1.65}
+.pre b{flex:0 0 auto;color:var(--ink-3);font-weight:600}
+.pre span{flex:1;min-width:0;color:var(--ink-2)}
+
+/* ---------- 业务流程（竖向时间线） ---------- */
+.flow-v{list-style:none;margin:0;padding:0;position:relative}
+.flow-v::before{content:"";position:absolute;left:11px;top:16px;bottom:16px;width:2px;background:var(--line);border-radius:1px}
+.flow-v li{position:relative;padding:0 0 12px 32px;font-size:12.5px;color:var(--ink-2);line-height:1.6;min-height:24px}
+.flow-v li:last-child{padding-bottom:0}
+.flow-v .nd{position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:#fff;border:1.5px solid var(--primary-line);color:var(--primary);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1}
+.flow-v li.start .nd{background:var(--primary);border-color:var(--primary);color:#fff}
+.flow-v li.end .nd{background:#059669;border-color:#059669;color:#fff}
+.flow-v li.branch .nd{background:#FFFBEB;border-color:#F59E0B;color:#B45309;border-radius:6px}
+.flow-v .note{display:inline-block;margin-top:5px;padding:3px 8px;border-radius:5px;background:#FFFBEB;border:1px solid #FDE68A;color:#B45309;font-size:11.5px;line-height:1.5}
+
+/* ---------- 异常场景 ---------- */
+.ex-card{border:1px solid var(--line);border-left:3px solid #F59E0B;border-radius:0 8px 8px 0;margin-bottom:10px;background:#fff}
+.ex-h{padding:9px 12px;background:#FFFDF7;border-bottom:1px solid var(--line-2);font-weight:600;font-size:12.5px;color:var(--ink)}
+.ex-b{padding:9px 12px}
+.ex-row{display:flex;gap:8px;font-size:12px;margin-bottom:6px;line-height:1.65}
+.ex-row:last-child{margin-bottom:0}
+.ex-row b{flex:0 0 58px;color:var(--ink-3);font-weight:400}
+.ex-row span{flex:1;min-width:0;color:var(--ink-2)}
+.ex-row .msg{color:#B45309;background:#FFFBEB;border-radius:4px;padding:1px 6px;font-size:11.5px}
+/* 功能点内的异常：紧凑版 */
+.ex-card.mini{border-left-width:2px;border-radius:0 6px 6px 0;margin-bottom:8px}
+.ex-card.mini .ex-h{padding:7px 10px;font-size:12px;font-weight:600}
+.ex-card.mini .ex-b{padding:7px 10px}
+.ex-card.mini .ex-row{font-size:11.5px;margin-bottom:4px;line-height:1.6}
+.ex-card.mini .ex-row b{flex:0 0 52px}
+/* 章节说明行 */
+.sec-note{font-size:11.5px;color:var(--ink-3);line-height:1.65;margin:-4px 0 10px;padding-left:1px}
+
+/* 概述段落 */
+.kv{display:grid;grid-template-columns:76px 1fr;gap:7px 10px;font-size:12px;margin:0}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;color:var(--ink-2)}
+.para{margin:0 0 10px;font-size:12.5px;color:var(--ink-2);line-height:1.8}
+.bullets{margin:0;padding-left:17px;font-size:12.5px;color:var(--ink-2);line-height:1.85}
+
+/* 新增章节按钮 */
+.add-sec{
+  width:100%;border:1px dashed #CBD5E1;background:#FCFDFE;color:var(--ink-3);
+  padding:9px;border-radius:6px;font-size:12px;margin-top:4px;transition:.15s;
+}
+.add-sec:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-weak)}
+
+/* 本机修改提示条 */
+#local-tip{
+  display:none;align-items:center;gap:10px;margin:0 0 16px;padding:9px 12px;
+  background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;font-size:11.5px;color:#92400E;
+}
+#local-tip.show{display:flex}
+#local-tip button{margin-left:auto;border:1px solid #FDE68A;background:#fff;color:#92400E;border-radius:4px;padding:2px 8px;font-size:11px}
+
+/* 编辑态顶部条 */
+#edit-bar{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:300;
+  background:#92400E;color:#fff;padding:8px 20px;font-size:12px;
+  align-items:center;gap:14px;
+}
+#edit-bar.show{display:flex}
+#edit-bar b{font-weight:700}
+#edit-bar .sp{flex:1}
+#edit-bar button{
+  border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;
+  border-radius:5px;padding:4px 12px;font-size:12px;
+}
+#edit-bar button:hover{background:rgba(255,255,255,.24)}
+body.editing{padding-bottom:44px}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1400px){
+  :root{--prd-w:410px}
+}
+@media (max-width:1180px){
+  :root{--prd-w:360px}
+  .tb-hint{display:none}
+  .win-body{height:540px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SVG 图标库（内联，无外部依赖，生产可直接复用）
+     用法：<svg class="ic"><use href="#i-lead"/></svg>
+     ============================================================ -->
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-lead" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.6v3.2M12 19.2v3.2M1.6 12h3.2M19.2 12h3.2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.4" r="3.2"/><path d="M2.8 20c0-3.4 2.9-5.4 6.2-5.4s6.2 2 6.2 5.4"/><path d="M16.4 5.6a3.2 3.2 0 0 1 0 6.1"/><path d="M17.9 14.8c2.1.6 3.3 2.2 3.3 4.4"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3.2 17.4 9 11.6l3.6 3.6 7.2-7.2"/><path d="M15.4 8h4.4v4.4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.8 4.6 6v6.2c0 4.6 3.2 7.7 7.4 9.1 4.2-1.4 7.4-4.5 7.4-9.1V6z"/><path d="m9.2 12.1 2 2 3.6-3.9"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.4 12.6 6.2 4.4h11.6l2.8 8.2v5.2a2 2 0 0 1-2 2H5.4a2 2 0 0 1-2-2Z"/><path d="M3.4 12.6h4.8l1.4 2.4h4.8l1.4-2.4h4.8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.1 1.9"/></symbol>
+  <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M3.4 4.6h17.2l-6.4 7.6v6.4l-4.4 2.4v-8.8z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 5 5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 4.8 4.8L19.5 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 5 7 7-7 7"/></symbol>
+</svg>
+
+<header id="topbar">
+  <div class="tb-left">
+    <span class="tb-sys" id="tb-sys">智宇CRM</span>
+    <span class="tb-tag" id="tb-tag">Web</span>
+  </div>
+  <div class="tb-hint" id="tb-hint">
+    <span>右侧说明跟随左侧菜单切换</span>
+    <span>点「编辑需求说明」可直接改，自动存本机</span>
+    <span>点编号气泡可定位到具体功能描述（编号对应功能点，非需求条目）</span>
+    <span>带 🔒 的列与左侧原型强绑定，不可修改</span>
+  </div>
+  <div class="tb-right">
+    <button class="btn" id="btn-edit">编辑需求说明</button>
+    <button class="btn" id="btn-export">导出 HTML</button>
+    <button class="btn" id="btn-hide">隐藏需求说明 ›</button>
+  </div>
+</header>
+
+<div id="split">
+  <!-- ==========================================================
+       左侧原型区 —— AI 生成的界面写在这里
+       规则：
+       1. 每个菜单一个 .page，data-menu 与 PRD_DATA.menus[].id 对应
+       2. 导航项加 data-menu-btn="<menu id>"，点击即切换右侧说明
+       3. 需要说明的功能元素加 data-fp="<功能点编号>"，自动生成编号气泡
+       4. 弹窗用 .mask.show 控制显示
+       ========================================================== -->
+  <section id="proto">
+
+    <!-- ===== 菜单 1：线索管理（admin 布局） ===== -->
+    <div class="page active" data-menu="lead">
+      <div class="win">
+        <div class="win-bar">
+          <i class="win-dot"></i><i class="win-dot"></i><i class="win-dot"></i>
+          <div class="win-url">https://crm.example.com/lead/list</div>
+        </div>
+        <div class="win-body">
+          <div class="lay-admin">
+            <aside class="ad-side">
+              <div class="ad-logo"><i>智</i>智宇 CRM</div>
+              <nav class="ad-nav">
+                <div class="ad-group">客户经营</div>
+                <div class="ad-item active" data-menu-btn="lead"><svg class="ic ico"><use href="#i-lead"/></svg>线索管理</div>
+                <div class="ad-item"><svg class="ic ico"><use href="#i-users"/></svg>客户管理</div>
+                <div class="ad-item"><svg class="ic ico"><use href="#i-trend"/></svg>商机跟进</div>
+                <div class="ad-group">系统</div>
+                <div class="ad-item"><svg class="ic ico"><use href="#i-shield"/></svg>员工与权限</div>
+              </nav>
+            </aside>
+            <div class="ad-main">
+              <div class="ad-top">
+                <div class="ad-crumb">客户经营 / <b>线索管理</b></div>
+                <div class="ad-user"><span class="ad-avatar">李</span>李明 · 销售主管</div>
+              </div>
+              <div class="ad-content">
+                <div class="panel">
+                  <div class="panel-body">
+                    <div class="toolbar">
+                      <div class="field">
+                        <label>线索名称</label>
+                        <input class="input" placeholder="请输入" data-fp="1">
+                      </div>
+                      <div class="field">
+                        <label>来源</label>
+                        <select class="select">
+                          <option>全部</option><option>官网表单</option><option>电话咨询</option><option>展会</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>状态</label>
+                        <select class="select">
+                          <option>全部</option><option>待跟进</option><option>跟进中</option><option>已转化</option>
+                        </select>
+                      </div>
+                      <button class="btn-ghost">查询</button>
+                      <button class="btn-ghost">重置</button>
+                      <div style="flex:1"></div>
+                      <button class="btn-primary" data-fp="2" onclick="location.href='#modal-lead'">+ 录入线索</button>
+                      <button class="btn-ghost" data-fp="3">批量导入</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head">
+                    <span class="panel-title">线索列表</span>
+                    <span style="font-size:12px;color:#94A3B8">共 128 条</span>
+                  </div>
+                  <table class="tbl">
+                    <thead>
+                      <tr>
+                        <th style="width:34px"><input type="checkbox"></th>
+                        <th>线索名称</th><th>联系人</th><th>手机号</th>
+                        <th>来源</th><th>状态</th><th>负责人</th><th>创建时间</th><th style="width:110px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><input type="checkbox"></td>
+                        <td class="strong">华东区仓储升级项目</td><td>张伟</td><td>138****2210</td>
+                        <td>官网表单</td><td><span class="tag tag-blue">跟进中</span></td><td>李明</td><td>2026-10-21</td>
+                        <td style="padding-right:26px" data-fp="4"><span class="link">详情</span> <span class="link">编辑</span></td>
+                      </tr>
+                      <tr>
+                        <td><input type="checkbox"></td>
+                        <td class="strong">宁波医疗器械集采</td><td>陈静</td><td>139****8834</td>
+                        <td>展会</td><td><span class="tag tag-amber">待跟进</span></td><td>王芳</td><td>2026-10-20</td>
+                        <td style="padding-right:26px"><span class="link">详情</span> <span class="link">编辑</span></td>
+                      </tr>
+                      <tr>
+                        <td><input type="checkbox"></td>
+                        <td class="strong">苏州工厂 MES 对接</td><td>刘强</td><td>137****5512</td>
+                        <td>电话咨询</td><td><span class="tag tag-green">已转化</span></td><td>李明</td><td>2026-10-19</td>
+                        <td style="padding-right:26px"><span class="link">详情</span> <span class="link">编辑</span></td>
+                      </tr>
+                      <tr>
+                        <td><input type="checkbox"></td>
+                        <td class="strong">杭州连锁餐饮采购</td><td>周敏</td><td>135****7789</td>
+                        <td>官网表单</td><td><span class="tag tag-blue">跟进中</span></td><td>赵磊</td><td>2026-10-18</td>
+                        <td style="padding-right:26px"><span class="link">详情</span> <span class="link">编辑</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="pager">
+                    <span>共 128 条</span>
+                    <b>‹</b><b class="cur">1</b><b>2</b><b>3</b><b>›</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 菜单 2：官网首页（portal 布局） ===== -->
+    <div class="page" data-menu="site">
+      <div class="win">
+        <div class="win-bar">
+          <i class="win-dot"></i><i class="win-dot"></i><i class="win-dot"></i>
+          <div class="win-url">https://www.zhirui-crm.com</div>
+        </div>
+        <div class="win-body">
+          <div class="lay-portal">
+            <div class="pt-nav">
+              <div class="pt-logo">智宇<i>CRM</i></div>
+              <div class="pt-links">
+                <a class="active" data-menu-btn="site">产品</a>
+                <a>解决方案</a><a>客户案例</a><a>价格</a>
+              </div>
+              <button class="btn-ghost" data-fp="5">登录</button>
+              <button class="btn-primary" data-fp="6">免费试用</button>
+            </div>
+            <div class="pt-hero">
+              <h1>让每一条线索<br>都有归处</h1>
+              <p>从获客、跟进到成交，一套系统管住客户全生命周期。已服务 3200+ 成长型企业。</p>
+              <div class="pt-cta">
+                <button class="btn-primary">免费试用 14 天</button>
+                <button class="btn-ghost" data-fp="7">预约演示</button>
+              </div>
+            </div>
+            <div class="pt-sec">
+              <h2>核心能力</h2>
+              <p class="sub">围绕线索流转的三个关键环节</p>
+              <div class="pt-grid">
+                <div class="pt-card" data-fp="8">
+                  <div class="ic"><svg class="ic"><use href="#i-inbox"/></svg></div><h3>线索统一归集</h3>
+                  <p>官网、电话、展会、渠道多来源自动汇总，去重合并，不丢一条。</p>
+                </div>
+                <div class="pt-card">
+                  <div class="ic"><svg class="ic"><use href="#i-clock"/></svg></div><h3>跟进过程留痕</h3>
+                  <p>每次通话、拜访、报价自动记录，交接给同事不用口头复述。</p>
+                </div>
+                <div class="pt-card">
+                  <div class="ic"><svg class="ic"><use href="#i-funnel"/></svg></div><h3>转化漏斗可视</h3>
+                  <p>各环节转化率实时呈现，卡点在哪一眼看得出。</p>
+                </div>
+              </div>
+            </div>
+            <div class="pt-foot">© 2026 智宇科技 · 浙ICP备 2026xxxxxx号</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 菜单 3：登录页（plain 布局） ===== -->
+    <div class="page" data-menu="login">
+      <div class="win">
+        <div class="win-bar">
+          <i class="win-dot"></i><i class="win-dot"></i><i class="win-dot"></i>
+          <div class="win-url">https://crm.example.com/login</div>
+        </div>
+        <div class="win-body">
+          <div class="lay-plain">
+            <div class="pl-card">
+              <h1>登录智宇 CRM</h1>
+              <p class="sub">使用企业账号登录</p>
+              <div class="pl-item">
+                <label>手机号</label>
+                <input class="input" placeholder="请输入手机号" data-fp="9">
+              </div>
+              <div class="pl-item">
+                <label>密码</label>
+                <input class="input" type="password" placeholder="请输入密码">
+              </div>
+              <button class="pl-submit" data-fp="10">登 录</button>
+              <div class="pl-foot">忘记密码？联系管理员重置</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ================= 右侧需求说明区（完全由 PRD_DATA 渲染） ================= -->
+  <aside id="prd">
+    <div id="local-tip">
+      <span id="local-tip-txt"></span>
+      <button id="btn-discard-local">丢弃本机修改</button>
+    </div>
+    <div id="prd-body"></div>
+  </aside>
+</div>
+
+<button id="toggle-prd">隐藏需求说明 ›</button>
+
+<div id="edit-bar">
+  <b>编辑态</b>
+  <span>黄底格子可改，🔒 锁死项与左侧原型强绑定。改完记得点「导出 HTML」，否则改动只存在本机浏览器里。</span>
+  <span class="sp"></span>
+  <button id="btn-export-2">导出 HTML</button>
+  <button id="btn-done">完成</button>
+</div>
+
+<!-- ============================================================
+     PRD 数据源 —— 右侧说明的全部内容都在这里
+     结构说明见 references/spec-common.md
+     ============================================================ -->
+<script id="prd-data" type="application/json">
+{
+  "system": "智宇CRM",
+  "platform": "web",
+  "theme": {
+    "primary": "#2563EB"
+  },
+  "menus": [
+    {
+      "id": "lead",
+      "name": "线索管理",
+      "summary": "销售线索的查询、录入、导入与详情查看，是销售团队每天使用频次最高的页面。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "面包屑「客户经营 / 线索管理」+ 右侧当前用户（头像 + 姓名 + 角色），固定在内容区顶端不随内容滚动"
+            },
+            {
+              "k": "筛选区",
+              "v": "白色卡片内一行横排：线索名称输入框、来源下拉、状态下拉、查询/重置按钮；右对齐「+ 录入线索」主按钮与「批量导入」次按钮"
+            },
+            {
+              "k": "页面主体",
+              "v": "线索列表表格。列：勾选框、线索名称、联系人、手机号、来源、状态、负责人、创建时间、操作（详情/编辑）；表头吸顶，行高 40，斑马纹关闭、hover 高亮"
+            },
+            {
+              "k": "空状态",
+              "v": "无数据时保留表头，表格区居中展示「暂无数据」与「+ 录入线索」按钮，不隐藏筛选区"
+            },
+            {
+              "k": "分页",
+              "v": "表格右下角，展示「共 N 条」+ 页码，每页 20 条，页码超过 7 个时折叠为省略号"
+            }
+          ]
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "录入线索弹窗",
+              "trigger": "点击筛选区右侧「+ 录入线索」按钮",
+              "content": "两列表单：线索名称、联系人、手机号、来源（下拉）、负责人（人员选择）、备注（整行多行文本）；底部「取消」「保存」按钮，保存为主操作",
+              "close": "点右上角 ×、点「取消」、按 Esc、点遮罩空白处；保存成功后自动关闭并 Toast 提示",
+              "form": "居中模态弹窗，宽 560，圆角 10，遮罩 42% 黑；表单两列栅格，备注占整行",
+              "anim": "遮罩淡入 200ms；弹窗淡入 + 内容上移 8px（ease-out）；关闭反向 150ms，不做缩放下沉"
+            },
+            {
+              "panel": "批量导入弹窗",
+              "trigger": "点击「批量导入」按钮",
+              "content": "第一步：模板下载链接 + 拖拽上传区（支持点击选择）+「仅支持 xlsx/xls，单次 ≤2000 行」说明；第二步：校验结果（成功数/失败数）+ 错误行表格（行号、字段、原因）+ 「导出错误清单」",
+              "close": "点右上角 ×、点「取消」、导入完成后点「关闭」；上传解析中禁用关闭并提示「处理中，请稍候」",
+              "form": "居中模态弹窗，宽 640，分两步展示，顶部有步骤条（1 选择文件 → 2 校验结果）",
+              "anim": "步骤切换横向滑入 220ms（ease-in-out）；弹窗本体淡入 200ms"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "无该菜单查看权限",
+              "behavior": "隐藏列表与操作按钮，仅保留页面框架",
+              "message": "「暂无查看权限，请联系管理员开通」"
+            },
+            {
+              "scene": "网络断开 / 请求超时",
+              "behavior": "列表区替换为重试按钮，保留筛选条件与分页状态，已填写的弹窗内容不丢失",
+              "message": "「网络异常，加载失败，点击重试」"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "/lead/list"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "销售专员、销售主管、系统管理员"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "把散落在官网表单、电话、展会等渠道的线索集中到一处，支持按条件筛选并快速录入，避免线索遗漏与重复跟进。"
+                }
+              ]
+            },
+            {
+              "type": "para",
+              "text": "本页面为线索管理的主入口。列表默认按创建时间倒序展示，支持分页；上方筛选区条件之间为「与」关系，查询与重置即时生效。"
+            }
+          ]
+        },
+        {
+          "type": "permission",
+          "title": "权限说明",
+          "rows": [
+            {
+              "name": "线索列表",
+              "ops": "查看本人及下属线索；按条件筛选",
+              "data": "本人 + 下属数据",
+              "note": "销售专员仅本人"
+            },
+            {
+              "name": "录入线索",
+              "ops": "新增线索",
+              "data": "写入本部门",
+              "note": "需「线索-新增」权限"
+            },
+            {
+              "name": "批量导入",
+              "ops": "下载模板、上传 Excel",
+              "data": "写入本部门",
+              "note": "单次上限 2000 行"
+            },
+            {
+              "name": "线索详情",
+              "ops": "查看、编辑、转客户",
+              "data": "同列表范围",
+              "note": "已转化线索只读"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 1,
+              "name": "线索列表查询",
+              "desc": "按线索名称、来源、状态组合筛选线索，结果分页展示。",
+              "fields": {
+                "table": "list",
+                "caption": "筛选与列表元素",
+                "rows": [
+                  {
+                    "el": "线索名称",
+                    "type": "文本输入",
+                    "logic": "模糊匹配，去首尾空格",
+                    "note": "回车即查询"
+                  },
+                  {
+                    "el": "来源",
+                    "type": "下拉单选",
+                    "logic": "精确匹配；选项取自数据字典",
+                    "note": "默认「全部」"
+                  },
+                  {
+                    "el": "状态",
+                    "type": "下拉单选",
+                    "logic": "精确匹配",
+                    "note": "默认「全部」"
+                  },
+                  {
+                    "el": "查询/重置",
+                    "type": "按钮",
+                    "logic": "查询按当前条件刷新列表；重置清空全部条件并回到第 1 页",
+                    "note": ""
+                  }
+                ]
+              },
+              "rules": [
+                "三个筛选条件之间为「与」关系，任一项为空则不参与过滤。",
+                "列表默认按创建时间倒序，每页 20 条。",
+                "筛选结果为空时，列表区展示空状态插图与「暂无数据」文案，不隐藏表头。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "列表加载失败",
+                  "behavior": "表格区替换为重试按钮，保留筛选条件与分页状态",
+                  "message": "「加载失败，点击重试」"
+                }
+              ]
+            },
+            {
+              "fp": 2,
+              "name": "录入线索",
+              "desc": "点击后在当前页弹出录入弹窗，填写基础信息后保存，列表顶部插入新记录。",
+              "precondition": "已登录且具备「线索-新增」权限；数据字典已配置来源选项；当前部门存在在职员工可指派",
+              "flow": [
+                {
+                  "t": "点击「+ 录入线索」",
+                  "type": "start"
+                },
+                {
+                  "t": "弹出录入弹窗，自动聚焦「线索名称」",
+                  "type": "step"
+                },
+                {
+                  "t": "填写基础信息，来源与负责人默认带出",
+                  "type": "step"
+                },
+                {
+                  "t": "必填项与格式校验",
+                  "type": "branch",
+                  "note": "不通过 → 字段标红 + 底部聚合提示，阻止提交"
+                },
+                {
+                  "t": "线索名称查重",
+                  "type": "branch",
+                  "note": "重复 → 提示「该线索已存在」并阻止提交"
+                },
+                {
+                  "t": "手机号查重",
+                  "type": "branch",
+                  "note": "已存在 → 弹二次确认，可继续新增或合并"
+                },
+                {
+                  "t": "保存成功，弹窗关闭，列表回第 1 页并高亮新记录",
+                  "type": "end"
+                }
+              ],
+              "fields": {
+                "table": "form-add",
+                "caption": "弹窗字段",
+                "rows": [
+                  {
+                    "el": "线索名称",
+                    "type": "文本",
+                    "required": "是",
+                    "rule": "2-50 字，不可重复",
+                    "default": "",
+                    "note": "重复时提示「该线索已存在」"
+                  },
+                  {
+                    "el": "联系人",
+                    "type": "文本",
+                    "required": "是",
+                    "rule": "2-20 字",
+                    "default": "",
+                    "note": ""
+                  },
+                  {
+                    "el": "手机号",
+                    "type": "文本",
+                    "required": "是",
+                    "rule": "11 位手机号正则",
+                    "default": "",
+                    "note": "同手机号线索自动提示合并"
+                  },
+                  {
+                    "el": "来源",
+                    "type": "下拉单选",
+                    "required": "是",
+                    "rule": "取自数据字典",
+                    "default": "官网表单",
+                    "note": ""
+                  },
+                  {
+                    "el": "负责人",
+                    "type": "人员选择",
+                    "required": "否",
+                    "rule": "限本部门在职员工",
+                    "default": "当前登录人",
+                    "note": ""
+                  },
+                  {
+                    "el": "备注",
+                    "type": "多行文本",
+                    "required": "否",
+                    "rule": "≤500 字",
+                    "default": "",
+                    "note": ""
+                  }
+                ]
+              },
+              "rules": [
+                "必填项未填时，保存按钮下方聚合提示，字段框标红。",
+                "手机号在系统中已存在时，提示「该客户已存在」并阻止提交。",
+                "保存成功后弹窗关闭，Toast 提示「录入成功」，列表回到第 1 页并高亮新记录。"
+              ],
+              "states": [
+                "待跟进",
+                "跟进中",
+                "已转化",
+                "已废弃"
+              ],
+              "exceptions": [
+                {
+                  "scene": "线索名称重复",
+                  "behavior": "阻止保存，字段标红并聚焦到该字段",
+                  "message": "「该线索已存在，请勿重复录入」"
+                },
+                {
+                  "scene": "手机号已存在",
+                  "behavior": "不阻止提交，弹出二次确认，可选「继续新增」或「合并到已有线索」",
+                  "message": "「该手机号已有线索，是否合并？」"
+                }
+              ]
+            },
+            {
+              "fp": 3,
+              "name": "批量导入",
+              "desc": "下载 Excel 模板，填写后上传，系统逐行校验并回显错误行。",
+              "fields": {
+                "table": "form-add",
+                "caption": "导入配置",
+                "rows": [
+                  {
+                    "el": "模板下载",
+                    "type": "链接",
+                    "required": "—",
+                    "rule": "含字段说明与示例行",
+                    "default": "—",
+                    "note": "模板版本随字段变更"
+                  },
+                  {
+                    "el": "上传文件",
+                    "type": "文件",
+                    "required": "是",
+                    "rule": "xlsx/xls，≤10MB，≤2000 行",
+                    "default": "",
+                    "note": ""
+                  }
+                ]
+              },
+              "rules": [
+                "导入采用「全量校验、失败回滚」：任一行校验不通过则整批不落库。",
+                "错误行以表格回显行号、字段名、错误原因，支持导出错误清单。",
+                "导入过程展示进度条，可中断；中断后已写入数据保留。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "导入文件格式错误（非 xlsx/xls）",
+                  "behavior": "上传区标红抖动，停留在第一步，不进入校验",
+                  "message": "「仅支持 xlsx / xls 格式，请重新上传」"
+                },
+                {
+                  "scene": "导入行数超过 2000 行",
+                  "behavior": "前端拦截，不发起上传请求",
+                  "message": "「单次最多导入 2000 行，请拆分后重试」"
+                },
+                {
+                  "scene": "导入存在必填字段缺失",
+                  "behavior": "全量校验、失败回滚，不落库；展示错误行清单，支持导出",
+                  "message": "「第 12 行「联系人」不能为空」"
+                }
+              ]
+            },
+            {
+              "fp": 4,
+              "name": "线索详情",
+              "desc": "点击列表行「详情」进入详情页，展示线索基础信息、跟进记录与操作日志。",
+              "fields": {
+                "table": "detail",
+                "caption": "详情展示元素",
+                "rows": [
+                  {
+                    "group": "基础信息",
+                    "name": "线索名称",
+                    "logic": "标题区加粗展示",
+                    "note": ""
+                  },
+                  {
+                    "group": "基础信息",
+                    "name": "状态",
+                    "logic": "状态标签，颜色随状态变化",
+                    "note": ""
+                  },
+                  {
+                    "group": "基础信息",
+                    "name": "手机号",
+                    "logic": "中间四位脱敏，鼠标悬停显示完整",
+                    "note": "需「查看完整手机号」权限"
+                  },
+                  {
+                    "group": "跟进记录",
+                    "name": "跟进时间线",
+                    "logic": "按时间倒序，每页 10 条，加载更多",
+                    "note": ""
+                  }
+                ]
+              },
+              "rules": [
+                "已转化为客户的线索，详情页全部字段只读，仅保留「查看客户」入口。",
+                "跟进记录新增后即时插入时间线顶部，无需刷新页面。"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "site",
+      "name": "官网首页",
+      "summary": "对外获客主入口，承担产品价值传达与试用转化，不做登录态展示。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "固定导航条高 62：左侧品牌 logo，中间产品/解决方案/客户案例/价格四个链接，右侧「登录」描边按钮 +「免费试用」主按钮"
+            },
+            {
+              "k": "首屏",
+              "v": "居中 hero，浅蓝渐变背景，主标题 32px 两行、副标题一行，下方并排两个行动按钮（免费试用 14 天 / 预约演示）"
+            },
+            {
+              "k": "页面主体",
+              "v": "「核心能力」区块，三列等宽卡片（图标 38×38 + 标题 + 描述），卡片 hover 上浮 2px 并加深阴影"
+            },
+            {
+              "k": "底部",
+              "v": "版权信息条，浅灰底，居中单行，含备案号"
+            },
+            {
+              "k": "响应式",
+              "v": "宽屏三列卡片；宽度 <900 时降为单列，hero 左右内边距从 40 收到 20"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "网络超时（> 10s）",
+              "behavior": "中止请求，按钮恢复可点，顶部出现离线提示条",
+              "message": "「网络超时，请检查网络后重试」"
+            },
+            {
+              "scene": "静态资源加载失败",
+              "behavior": "保持布局骨架与文字，图位显示占位色块，不出现页面塌陷",
+              "message": "无（静默降级）"
+            },
+            {
+              "scene": "浏览器版本过低（IE / 旧版 Edge）",
+              "behavior": "整页替换为升级引导，不渲染导航与 hero",
+              "message": "「请使用 Chrome / Edge 最新版本访问」"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "预约演示弹窗",
+              "trigger": "点击 hero 区「预约演示」次按钮",
+              "content": "表单：姓名、公司名称、手机号、所在行业（下拉）、备注（整行多行文本）；底部「提交」主按钮 + 隐私政策说明小字",
+              "close": "点右上角 ×、点遮罩空白处、按 Esc；提交成功后自动关闭并切换为成功态（含 3 秒倒计时回到官网）",
+              "form": "居中模态弹窗，宽 520，圆角 10，遮罩 42% 黑；表单两列栅格，备注占整行",
+              "anim": "遮罩淡入 200ms；弹窗内容上移 8px 淡入 220ms（ease-out）；关闭反向 150ms"
+            },
+            {
+              "panel": "移动端导航抽屉",
+              "trigger": "视口宽度 < 900 时点击右上角汉堡图标",
+              "content": "四个导航链接纵向排列（产品 / 解决方案 / 客户案例 / 价格，行高 48）+ 底部「登录」描边按钮与「免费试用」主按钮",
+              "close": "点遮罩、点任一导航链接、按 Esc、再次点击汉堡图标",
+              "form": "右侧抽屉，宽 76% 屏宽（上限 320），全屏高，白底，无顶部标题栏",
+              "anim": "从右滑入 240ms（ease-out）；遮罩同步淡入 200ms；关闭 200ms"
+            }
+          ]
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "/"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "未登录访客、潜在客户"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "在 30 秒内说清产品价值，并给出低门槛的下一步动作（免费试用 / 预约演示）。"
+                }
+              ]
+            },
+            {
+              "type": "para",
+              "text": "首屏不出现任何需要登录才能看的内容；所有转化按钮统一指向试用注册页，携带来源参数用于后续归因。"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 5,
+              "name": "登录入口",
+              "desc": "顶部导航右侧的次要按钮，供已有账号的客户回到系统。",
+              "rules": [
+                "点击跳转 /login，不新开窗口。",
+                "按钮视觉权重低于「免费试用」，使用描边样式。"
+              ]
+            },
+            {
+              "fp": 6,
+              "name": "免费试用",
+              "desc": "页面主行动点，首屏与导航各出现一次，均指向试用注册。",
+              "rules": [
+                "跳转链接携带 utm_source=home&utm_medium=cta。",
+                "移动端首屏按钮通栏展示，不并排。"
+              ],
+              "precondition": "访客未登录且未处于白名单限制期；该手机号未注册过试用租户",
+              "flow": [
+                {
+                  "t": "点击「免费试用 14 天」",
+                  "type": "start"
+                },
+                {
+                  "t": "跳转注册页，自动带入来源渠道与 UTM 参数",
+                  "type": "step"
+                },
+                {
+                  "t": "填写企业名称、手机号、密码",
+                  "type": "step"
+                },
+                {
+                  "t": "短信验证码校验",
+                  "type": "branch",
+                  "note": "失败 → 提示并允许 60 秒后重发，最多 3 次"
+                },
+                {
+                  "t": "创建试用租户（有效期 14 天，含 5 个席位）",
+                  "type": "step"
+                },
+                {
+                  "t": "自动登录并进入工作台，顶部展示试用倒计时条",
+                  "type": "end"
+                }
+              ]
+            },
+            {
+              "fp": 7,
+              "name": "预约演示",
+              "desc": "次要行动点，弹出留资表单，由销售在 1 个工作日内回访。",
+              "rules": [
+                "表单仅收集姓名、公司、手机号三项，降低填写成本。",
+                "提交后展示「已收到，顾问将在 1 个工作日内联系您」。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "手机号格式错误",
+                  "behavior": "输入框标红并聚焦，阻止提交，错误文案显示在字段下方",
+                  "message": "「请输入正确的 11 位手机号」"
+                },
+                {
+                  "scene": "同手机号 24 小时内重复提交",
+                  "behavior": "不新建记录，直接返回已提交提示，不报错",
+                  "message": "「我们已收到你的预约，稍后会与您联系」"
+                },
+                {
+                  "scene": "提交失败（服务端异常）",
+                  "behavior": "按钮恢复可点，保留全部已填内容，不清空表单",
+                  "message": "「提交失败，请稍后重试」"
+                }
+              ]
+            },
+            {
+              "fp": 8,
+              "name": "核心能力卡片",
+              "desc": "三张卡片并列展示产品能力，鼠标悬停有轻微上浮。",
+              "rules": [
+                "每张卡片文案不超过 40 字，超出截断为两行。",
+                "卡片整体可点击，跳转对应能力详情页。"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "login",
+      "name": "登录页",
+      "summary": "企业账号登录入口，无导航、无侧栏，单卡片居中。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "无导航、无 logo，整页浅灰背景，内容垂直水平居中"
+            },
+            {
+              "k": "页面主体",
+              "v": "单张白色卡片宽 376，圆角 12，内边距 32：标题「登录智宇 CRM」+ 副标题 + 手机号输入 + 密码输入 + 通栏登录按钮"
+            },
+            {
+              "k": "辅助区",
+              "v": "卡片底部居中一行小字「忘记密码？联系管理员重置」，12px 灰色，不可点击"
+            },
+            {
+              "k": "加载态",
+              "v": "提交时按钮内文字替换为 loading 圈，宽度不变，防止布局跳动"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "网络超时",
+              "behavior": "按钮恢复可点，保留已填手机号，清空密码",
+              "message": "「登录超时，请检查网络后重试」"
+            },
+            {
+              "scene": "浏览器版本过低",
+              "behavior": "整页替换为升级提示，不渲染登录表单",
+              "message": "「请使用 Chrome / Edge 最新版本访问」"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "忘记密码引导浮层",
+              "trigger": "点击卡片底部「忘记密码？联系管理员重置」",
+              "content": "说明文案「本系统账号由企业管理员统一开通，请联系管理员重置密码」+ 管理员邮箱（带「复制」按钮）+ 底部「我知道了」",
+              "close": "点右上角 ×、点遮罩空白处、按 Esc、点「我知道了」；点「复制」后按钮文案变为「已复制」并保持 2 秒",
+              "form": "居中轻量浮层，宽 360，圆角 10，无表单输入，仅文案与按钮",
+              "anim": "淡入 160ms + 上移 6px；关闭淡出 140ms"
+            },
+            {
+              "panel": "登录失败提示条",
+              "trigger": "提交后服务端返回错误码",
+              "content": "卡片内表单顶部内联提示条：左侧警示图标 + 错误文案，整条占据卡片宽度",
+              "close": "重新提交时自动消失；无操作时 5 秒后自动淡出；不使用 Toast，避免与按钮 loading 冲突",
+              "form": "内联提示条（非弹窗），浅红底 + 深红文字，左侧 3px 实心竖条，高度自适应文案行数",
+              "anim": "高度展开 180ms + 淡入；消失淡出 160ms，收起高度"
+            }
+          ]
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "/login"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "全体已开通账号的用户"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "以最小认知成本完成身份校验，异常情况给出可执行的下一步。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 9,
+              "name": "账号密码输入",
+              "desc": "手机号 + 密码双字段登录。",
+              "fields": {
+                "table": "form-edit",
+                "caption": "输入项",
+                "rows": [
+                  {
+                    "el": "手机号",
+                    "type": "文本",
+                    "required": "是",
+                    "rule": "11 位手机号",
+                    "default": "",
+                    "note": "自动聚焦"
+                  },
+                  {
+                    "el": "密码",
+                    "type": "密码",
+                    "required": "是",
+                    "rule": "8-20 位，含字母与数字",
+                    "default": "",
+                    "note": "可切换明文"
+                  }
+                ]
+              },
+              "rules": [
+                "连续 5 次密码错误锁定账号 15 分钟，提示剩余时间。",
+                "密码框不提供浏览器自动填充以外的记忆功能。"
+              ]
+            },
+            {
+              "fp": 10,
+              "name": "登录提交",
+              "desc": "校验通过后跳转工作台；失败时在表单上方给出原因。",
+              "rules": [
+                "提交中按钮置灰并显示 loading，防重复点击。",
+                "登录成功后跳转上次访问页，无记录则进 /dashboard。"
+              ],
+              "precondition": "账号已由管理员开通且当前未处于锁定状态；企业租户状态正常（未过期、未停用）",
+              "flow": [
+                {
+                  "t": "输入手机号与密码",
+                  "type": "start"
+                },
+                {
+                  "t": "前端格式校验",
+                  "type": "branch",
+                  "note": "不通过 → 字段标红并阻止提交"
+                },
+                {
+                  "t": "提交登录请求，按钮进入 loading 且禁点",
+                  "type": "step"
+                },
+                {
+                  "t": "服务端校验凭证与租户状态",
+                  "type": "branch",
+                  "note": "失败 → 提示条 + 失败计数 +1，满 5 次锁定 10 分钟"
+                },
+                {
+                  "t": "签发会话，跳转工作台首页",
+                  "type": "step"
+                },
+                {
+                  "t": "记录登录日志（IP、设备、时间）",
+                  "type": "end"
+                }
+              ],
+              "exceptions": [
+                {
+                  "scene": "账号或密码错误",
+                  "behavior": "停留在登录页，清空密码框并重新聚焦，提示条展示",
+                  "message": "「账号或密码错误，请重新输入」"
+                },
+                {
+                  "scene": "连续失败 5 次",
+                  "behavior": "锁定该账号 10 分钟，登录按钮置灰并实时显示剩余时间",
+                  "message": "「尝试次数过多，请 10 分钟后再试」"
+                },
+                {
+                  "scene": "账号被禁用",
+                  "behavior": "阻止登录，不提示具体原因（避免账号枚举）",
+                  "message": "「账号不可用，请联系管理员」"
+                },
+                {
+                  "scene": "账号未开通本系统权限",
+                  "behavior": "凭证校验通过但不签发会话，停留在提示页",
+                  "message": "「当前账号未开通本系统权限」"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     0. 工具
+     ========================================================= */
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function ts() {
+    var d = new Date(), p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function setByPath(obj, path, val) {
+    var parts = path.split('.'), cur = obj, i;
+    for (i = 0; i < parts.length - 1; i++) { cur = cur[parts[i]]; if (!cur) return; }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  /* =========================================================
+     1. 状态
+     ========================================================= */
+  var DATA = null;
+  var STORE_KEY = '';
+  var editing = false;
+  var currentMenu = '';
+  var saveTimer = null;
+
+  var LOCK = {
+    'list':      ['el', 'type'],
+    'form-add':  ['el', 'type', 'required', 'rule', 'default'],
+    'form-edit': ['el', 'type'],
+    'detail':    ['group', 'name']
+  };
+  var COLS = {
+    'list':      [['el', '元素', '23%'], ['type', '类型', '20%'], ['logic', '展示逻辑说明', '35%'], ['note', '备注', '22%']],
+    'form-add':  [['el', '元素', '18%'], ['type', '类型', '12%'], ['required', '必填', '7%'], ['rule', '校验规则', '30%'], ['default', '默认值', '12%'], ['note', '备注', '21%']],
+    'form-edit': [['el', '元素', '18%'], ['type', '类型', '12%'], ['required', '必填', '7%'], ['rule', '校验规则', '30%'], ['default', '默认值', '12%'], ['note', '备注', '21%']],
+    'detail':    [['group', '分组', '17%'], ['name', '字段名', '24%'], ['logic', '展示逻辑说明', '38%'], ['note', '备注', '21%']]
+  };
+  /* =========================================================
+     2. 载入数据 / 本机缓存
+     ========================================================= */
+  function boot() {
+    var raw = JSON.parse($('#prd-data').textContent);
+    DATA = raw;
+    STORE_KEY = 'pageprd:' + (raw.system || 'sys') + ':' + (raw.platform || 'web');
+
+    if (raw.theme && raw.theme.primary) {
+      document.documentElement.style.setProperty('--primary', raw.theme.primary);
+    }
+    $('#tb-sys').textContent = raw.system || '未命名系统';
+    $('#tb-tag').textContent = raw.platform === 'mobile' ? '移动端' : 'Web';
+
+    try {
+      var cached = localStorage.getItem(STORE_KEY);
+      if (cached) {
+        var c = JSON.parse(cached);
+        if (c && c.__savedAt && c.__savedAt !== raw.__savedAt) {
+          if (window.confirm('检测到本机有未合并的说明修改（' + new Date(c.__savedAt).toLocaleString() + '）。\n\n点「确定」载入本机版本；点「取消」使用 HTML 文件内的版本，并丢弃本机修改。')) {
+            DATA = c;
+            showLocalTip(c.__savedAt);
+          } else {
+            localStorage.removeItem(STORE_KEY);
+          }
+        }
+      }
+    } catch (e) { /* 隐私模式 / 容量超限，忽略 */ }
+
+    currentMenu = (DATA.menus && DATA.menus[0]) ? DATA.menus[0].id : '';
+    var activePage = $('.page.active');
+    if (activePage && activePage.dataset.menu) currentMenu = activePage.dataset.menu;
+
+    bindGlobal();
+    buildBubbles();
+    activateMenu(currentMenu, true);
+  }
+
+  function showLocalTip(savedAt) {
+    $('#local-tip-txt').textContent = '本机有 ' + new Date(savedAt).toLocaleString() + ' 的修改，尚未合并进 HTML 文件。';
+    $('#local-tip').classList.add('show');
+  }
+
+  function scheduleSave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      DATA.__savedAt = Date.now();
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch (e) {}
+    }, 320);
+  }
+
+  /* =========================================================
+     3. 菜单切换
+     ========================================================= */
+  function findMenu(id) {
+    if (!DATA.menus) return null;
+    for (var i = 0; i < DATA.menus.length; i++) if (DATA.menus[i].id === id) return DATA.menus[i];
+    return null;
+  }
+
+  function activateMenu(id, silent) {
+    var menu = findMenu(id);
+    if (!menu) return;
+    currentMenu = id;
+
+    $$('#proto .page').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.menu === id);
+    });
+    $$('#proto [data-menu-btn]').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.menuBtn === id);
+    });
+
+    renderPrd(id);
+    if (!silent) {
+      $('#prd').scrollTop = 0;
+      buildBubbles();
+    } else {
+      requestAnimationFrame(placeBubbles);
+    }
+  }
+
+  /* =========================================================
+     4. 右侧说明渲染
+     ========================================================= */
+  function renderPrd(menuId) {
+    var menu = findMenu(menuId);
+    var host = $('#prd-body');
+    if (!menu) { host.innerHTML = '<p class="para">未找到该菜单的需求说明。</p>'; return; }
+
+    var mi = DATA.menus.indexOf(menu);
+    var h = '';
+
+    h += '<h1 class="prd-title"><span class="seq">' + (mi + 1) + '</span>' + esc(menu.name) + '</h1>';
+    if (menu.summary) h += '<p class="prd-sub">' + esc(menu.summary) + '</p>';
+
+    // 布局说明恒在最前，异常场景恒在最后，其余保持原序
+    var secs = (menu.sections || []).map(function (sec, idx) { return { sec: sec, idx: idx }; });
+    secs.sort(function (a, b) {
+      var rank = function (t) { return t === 'layout' ? 0 : (t === 'exceptions' ? 2 : 1); };
+      return rank(a.sec.type) - rank(b.sec.type);
+    });
+    secs.forEach(function (x) { h += renderSection(x.sec, mi, x.idx); });
+
+    h += '<button class="add-sec" data-add-sec="' + mi + '">+ 新增章节</button>';
+    host.innerHTML = h;
+    bindPrdEvents();
+  }
+
+  function renderSection(sec, mi, si) {
+    var h = '<section class="sec">';
+    var del = sec.type === 'custom'
+      ? '<button class="del" data-del-sec="' + mi + '.' + si + '" title="删除该章节">删除</button>'
+      : '';
+    h += '<h2 class="sec-h">' + esc(sec.title || '未命名章节') + del + '</h2>';
+    if (sec.note) h += '<div class="sec-note">' + esc(sec.note) + '</div>';
+
+    if (sec.type === 'features') {
+      (sec.items || []).forEach(function (item, ii) {
+        h += renderFeature(item, mi, si, ii);
+      });
+    } else if (sec.type === 'permission') {
+      h += renderPermission(sec, mi, si);
+    } else if (sec.type === 'layout') {
+      h += renderLayout(sec, mi, si);
+    } else if (sec.type === 'interactions') {
+      h += renderInteractions(sec, mi, si);
+    } else if (sec.type === 'exceptions') {
+      h += renderExceptions(sec, mi, si);
+    } else {
+      (sec.blocks || []).forEach(function (blk, bi) {
+        h += renderBlock(blk, mi, si, bi);
+      });
+    }
+    h += '</section>';
+    return h;
+  }
+
+  function cell(tag, cls, attrs, text) {
+    return '<' + tag + (cls ? ' class="' + cls + '"' : '') + (attrs || '') + '>' + text + '</' + tag + '>';
+  }
+
+  function editableAttrs(path, cls) {
+    if (!editing) return ' class="' + cls + '"';
+    return ' class="' + cls + ' editable" contenteditable="true" spellcheck="false" data-path="' + path + '"';
+  }
+
+  /* ---- 4.1 功能点卡片 ---- */
+  function renderFeature(item, mi, si, ii) {
+    var base = 'menus.' + mi + '.sections.' + si + '.items.' + ii;
+    var fp = item.fp;
+
+    var h = '<div class="fp-card" data-fp-card="' + fp + '">';
+    h += '<div class="fp-card-head" data-toggle-card="1">';
+    h += '<span class="no">' + fp + '</span>';
+    h += '<span class="nm">' + esc(item.name) + '</span>';
+    h += '<span class="caret">▾</span>';
+    h += '</div>';
+    h += '<div class="fp-card-body">';
+
+    h += '<p class="fp-desc' + (editing ? ' ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.desc"' : '"') + '>' + esc(item.desc || '') + '</p>';
+
+    if (item.precondition) {
+      h += '<div class="pre"><b>前置条件</b><span' +
+        (editing ? ' contenteditable="true" spellcheck="false" data-path="' + base + '.precondition"' : '') +
+        '>' + esc(item.precondition) + '</span></div>';
+    }
+    if (item.flow && item.flow.length) {
+      h += renderFlow(item.flow, base + '.flow');
+    }
+
+    // 字段表
+    if (item.fields && item.fields.rows && item.fields.rows.length) {
+      h += renderFieldTable(item.fields, base + '.fields.rows');
+    }
+
+    // 业务规则
+    if (item.rules && item.rules.length) {
+      h += '<div class="sub-h">业务规则</div><ul class="rules">';
+      item.rules.forEach(function (r, ri) {
+        var p = base + '.rules.' + ri;
+        if (editing) h += '<li contenteditable="true" spellcheck="false" data-path="' + p + '">' + esc(r) + '</li>';
+        else h += '<li>' + esc(r) + '</li>';
+      });
+      h += '</ul>';
+    }
+
+    // 状态流转
+    if (item.exceptions && item.exceptions.length) {
+      h += '<div class="sub-h">异常场景</div>' + renderExList(item.exceptions, base + '.exceptions', true);
+    }
+    if (item.states && item.states.length) {
+      h += '<div class="sub-h">状态流转</div><ul class="flow">';
+      item.states.forEach(function (s, sidx) {
+        if (sidx > 0) h += '<li class="arrow">→</li>';
+        h += '<li>' + esc(s) + '</li>';
+      });
+      h += '</ul>';
+    }
+
+    h += '</div></div>';
+    return h;
+  }
+
+  /* ---- 4.2 字段表 ---- */
+  function renderFieldTable(fields, basePath) {
+    var kind = fields.table || 'list';
+    var cols = COLS[kind] || COLS['list'];
+    var lockSet = LOCK[kind] || [];
+
+    var h = '';
+    if (fields.caption) h += '<div class="sub-h">' + esc(fields.caption) + '</div>';
+    var tight = cols.length >= 6 ? ' tight' : '';
+    var minW = cols.length >= 6 ? 400 : 300;
+    h += '<div class="tbl-wrap"><table class="spec-tbl' + tight + '" style="min-width:' + minW + 'px"><thead><tr>';
+    cols.forEach(function (c) {
+      h += '<th style="width:' + c[2] + '">' + esc(c[1]) + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+
+    (fields.rows || []).forEach(function (row, ri) {
+      h += '<tr>';
+      cols.forEach(function (c) {
+        var key = c[0];
+        var val = row[key] == null ? '' : row[key];
+        var isLock = lockSet.indexOf(key) >= 0;
+        var cls = isLock ? 'lock' : 'editable';
+        if (isLock) {
+          h += cell('td', cls, '', esc(val));
+        } else if (editing) {
+          h += cell('td', cls, ' contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.' + key + '"', esc(val));
+        } else {
+          h += cell('td', cls, '', esc(val));
+        }
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  /* ---- 4.3 权限表 ---- */
+  /* ---- 4.3a 布局说明 ---- */
+  function renderLayout(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.rows';
+    var h = '';
+    (sec.rows || []).forEach(function (r, ri) {
+      h += '<div class="lay-item"><div class="lay-k">' + esc(r.k || '') + '</div>';
+      if (editing) {
+        h += '<div class="lay-v ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.' + ri + '.v">' + esc(r.v || '') + '</div>';
+      } else {
+        h += '<div class="lay-v">' + esc(r.v || '') + '</div>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+
+  /* ---- 4.3b 交互说明 ---- */
+  var IA_FIELDS = [['trigger', '触发方式'], ['content', '面板内容'], ['close', '关闭方式'], ['form', '展现形式'], ['anim', '动画效果']];
+
+  function renderInteractions(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.items';
+    var h = '';
+    (sec.items || []).forEach(function (it, ii) {
+      h += '<div class="ia-card"><div class="ia-h">';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + base + '.' + ii + '.panel">' + esc(it.panel || '未命名面板') + '</span>';
+      } else {
+        h += esc(it.panel || '未命名面板');
+      }
+      h += '</div><div class="ia-b">';
+      IA_FIELDS.forEach(function (f) {
+        var k = f[0];
+        if (!it[k]) return;
+        h += '<div class="ia-row"><b>' + f[1] + '</b>';
+        if (editing) {
+          h += '<span contenteditable="true" spellcheck="false" data-path="' + base + '.' + ii + '.' + k + '">' + esc(it[k]) + '</span>';
+        } else {
+          h += '<span>' + esc(it[k]) + '</span>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+    return h;
+  }
+
+  /* ---- 4.3c 异常场景 ---- */
+  function renderExList(rows, basePath, mini) {
+    var h = '';
+    (rows || []).forEach(function (r, ri) {
+      h += '<div class="ex-card' + (mini ? ' mini' : '') + '"><div class="ex-h">';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.scene">' + esc(r.scene || '') + '</span>';
+      } else {
+        h += esc(r.scene || '');
+      }
+      h += '</div><div class="ex-b">';
+      [['behavior', '系统表现'], ['message', '提示文案']].forEach(function (f) {
+        var k = f[0];
+        if (!r[k]) return;
+        h += '<div class="ex-row"><b>' + f[1] + '</b>';
+        if (editing) {
+          h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.' + k + '">' + esc(r[k]) + '</span>';
+        } else {
+          h += '<span' + (k === 'message' ? ' class="msg"' : '') + '>' + esc(r[k]) + '</span>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+    return h;
+  }
+
+  function renderExceptions(sec, mi, si) {
+    return renderExList(sec.rows, 'menus.' + mi + '.sections.' + si + '.rows', false);
+  }
+
+  /* ---- 4.3d 业务流程（竖向时间线） ---- */
+  function renderFlow(flow, basePath) {
+    var h = '<div class="sub-h">业务流程</div><ol class="flow-v">';
+    flow.forEach(function (n, i) {
+      var type = n.type || 'step';
+      h += '<li class="' + type + '"><span class="nd">' + (i + 1) + '</span>';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + i + '.t">' + esc(n.t || '') + '</span>';
+      } else {
+        h += '<span>' + esc(n.t || '') + '</span>';
+      }
+      if (n.note) h += '<div class="note">' + esc(n.note) + '</div>';
+      h += '</li>';
+    });
+    return h + '</ol>';
+  }
+
+  function renderPermission(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.rows';
+    var h = '<table class="spec-tbl"><thead><tr>' +
+      '<th style="width:26%">功能点</th><th style="width:31%">操作权限</th>' +
+      '<th style="width:24%">数据权限</th><th style="width:19%">备注</th></tr></thead><tbody>';
+    (sec.rows || []).forEach(function (row, ri) {
+      h += '<tr>';
+      h += cell('td', 'lock', '', esc(row.name || ''));
+      ['ops', 'data', 'note'].forEach(function (k) {
+        var p = base + '.' + ri + '.' + k;
+        if (editing) h += cell('td', 'editable', ' contenteditable="true" spellcheck="false" data-path="' + p + '"', esc(row[k] || ''));
+        else h += cell('td', 'editable', '', esc(row[k] || ''));
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    return h;
+  }
+
+  /* ---- 4.4 通用块 ---- */
+  function renderBlock(blk, mi, si, bi) {
+    var base = 'menus.' + mi + '.sections.' + si + '.blocks.' + bi;
+    if (blk.type === 'para') {
+      if (editing) return '<p class="para ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.text">' + esc(blk.text) + '</p>';
+      return '<p class="para">' + esc(blk.text) + '</p>';
+    }
+    if (blk.type === 'kv') {
+      var h = '<dl class="kv">';
+      (blk.rows || []).forEach(function (r, ri) {
+        var p = base + '.rows.' + ri + '.v';
+        h += '<dt>' + esc(r.k) + '</dt>';
+        if (editing) h += '<dd contenteditable="true" spellcheck="false" data-path="' + p + '">' + esc(r.v) + '</dd>';
+        else h += '<dd>' + esc(r.v) + '</dd>';
+      });
+      return h + '</dl>';
+    }
+    if (blk.type === 'list') {
+      var l = '<ul class="bullets">';
+      (blk.items || []).forEach(function (it, ii) {
+        var p = base + '.items.' + ii;
+        if (editing) l += '<li contenteditable="true" spellcheck="false" data-path="' + p + '">' + esc(it) + '</li>';
+        else l += '<li>' + esc(it) + '</li>';
+      });
+      return l + '</ul>';
+    }
+    if (blk.type === 'table') {
+      var t = '<table class="spec-tbl"><thead><tr>';
+      (blk.head || []).forEach(function (th) { t += '<th>' + esc(th) + '</th>'; });
+      t += '</tr></thead><tbody>';
+      (blk.rows || []).forEach(function (row, ri) {
+        t += '<tr>';
+        row.forEach(function (cv, ci) {
+          if (editing) t += cell('td', 'editable', ' contenteditable="true" spellcheck="false" data-path="' + base + '.rows.' + ri + '.' + ci + '"', esc(cv));
+          else t += cell('td', 'editable', '', esc(cv));
+        });
+        t += '</tr>';
+      });
+      return t + '</tbody></table>';
+    }
+    return '';
+  }
+
+  /* =========================================================
+     5. 右侧事件：折叠 / 编辑 / 新增删除章节
+     ========================================================= */
+  function bindPrdEvents() {
+    // 折叠
+    $$('#prd-body [data-toggle-card]').forEach(function (head) {
+      head.addEventListener('click', function () {
+        head.parentNode.classList.toggle('collapsed');
+      });
+    });
+
+    // 卡片 -> 左侧定位
+    $$('#prd-body .fp-card-head').forEach(function (head) {
+      head.addEventListener('dblclick', function (e) {
+        e.stopPropagation();
+        var card = head.parentNode;
+        locatetoProto(card.dataset.fpCard);
+      });
+    });
+    // 单击编号 -> 左侧定位
+    $$('#prd-body .fp-card-head .no').forEach(function (no) {
+      no.addEventListener('click', function (e) {
+        e.stopPropagation();
+        locatetoProto(no.parentNode.parentNode.dataset.fpCard);
+      });
+    });
+
+    // 新增章节
+    var addBtn = $('#prd-body .add-sec');
+    if (addBtn) addBtn.addEventListener('click', addSection);
+
+    // 删除章节
+    $$('#prd-body [data-del-sec]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var parts = b.dataset.delSec.split('.');
+        var mi = +parts[0], si = +parts[1];
+        if (!window.confirm('删除章节「' + DATA.menus[mi].sections[si].title + '」？')) return;
+        DATA.menus[mi].sections.splice(si, 1);
+        scheduleSave();
+        renderPrd(currentMenu);
+      });
+    });
+  }
+
+  function addSection() {
+    var name = window.prompt('新章节标题', '补充说明');
+    if (!name) return;
+    var menu = findMenu(currentMenu);
+    menu.sections = menu.sections || [];
+    menu.sections.push({
+      type: 'custom',
+      title: name,
+      blocks: [{ type: 'para', text: '在这里补充内容，编辑态下可直接修改。' }]
+    });
+    scheduleSave();
+    renderPrd(currentMenu);
+    var secs = $$('#prd .sec');
+    if (secs.length) secs[secs.length - 1].scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  /* =========================================================
+     6. 编号气泡 + 双向定位
+     ========================================================= */
+  function buildBubbles() {
+    $$('#proto [data-fp]').forEach(function (el) {
+      // 同元素同编号只建一次
+      var exists = false;
+      for (var i = 0; i < el.children.length; i++) {
+        if (el.children[i].classList && el.children[i].classList.contains('fp-bubble')) { exists = true; break; }
+      }
+      if (exists) return;
+
+      var b = document.createElement('span');
+      b.className = 'fp-bubble';
+      b.textContent = el.dataset.fp;
+      b.title = '定位到功能点 ' + el.dataset.fp + ' 的需求说明';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        locatetoCard(el.dataset.fp);
+      });
+      el.appendChild(b);
+    });
+    requestAnimationFrame(placeBubbles);
+  }
+
+  /* 气泡防裁切：贴边元素自动翻到另一侧，两侧都不够才收进内侧 */
+  function placeBubbles() {
+    var page = $('#proto .page.active');
+    if (!page) return;
+    var host = $('.win-body', page) || $('#proto');
+    var hr = host.getBoundingClientRect();
+    if (!hr.width) return;
+
+    $$('[data-fp]', page).forEach(function (el) {
+      var b = null;
+      for (var i = 0; i < el.children.length; i++) {
+        if (el.children[i].classList && el.children[i].classList.contains('fp-bubble')) { b = el.children[i]; break; }
+      }
+      if (!b) return;
+      if (el.getAttribute('data-fp-side')) return;
+
+      var er = el.getBoundingClientRect();
+      if (!er.width) return;
+      if (er.bottom < hr.top || er.top > hr.bottom) return;
+
+      b.style.left = ''; b.style.right = ''; b.style.top = ''; b.style.bottom = '';
+
+      var GAP = 8;
+      var rightRoom = hr.right - er.right;
+      var leftRoom = er.left - hr.left;
+      if (rightRoom < GAP + 1) {
+        if (leftRoom >= GAP + 1) { b.style.right = 'auto'; b.style.left = '-' + GAP + 'px'; }
+        else { b.style.right = '2px'; }
+      }
+
+      var topRoom = er.top - hr.top;
+      var bottomRoom = hr.bottom - er.bottom;
+      if (topRoom < GAP + 1) {
+        if (bottomRoom >= GAP + 1) { b.style.top = 'auto'; b.style.bottom = '-' + GAP + 'px'; }
+        else { b.style.top = '2px'; }
+      }
+
+      // 兜底：若仍被某个 overflow 祖先裁切，收进元素内侧
+      if (isClippedByAncestor(b, el)) {
+        b.style.left = 'auto'; b.style.right = '2px';
+        b.style.bottom = 'auto'; b.style.top = '2px';
+        b.style.opacity = '.72';
+      }
+    });
+  }
+
+  /* 检测气泡是否被某个 overflow != visible 的祖先裁掉 */
+  function isClippedByAncestor(b, el) {
+    var br = b.getBoundingClientRect();
+    var p = el.parentNode;
+    while (p && p !== document.body) {
+      var cs = window.getComputedStyle(p);
+      var clipped = cs.overflow !== 'visible' || cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
+      if (clipped) {
+        var pr = p.getBoundingClientRect();
+        if (br.right > pr.right - 1 || br.left < pr.left + 1 || br.bottom > pr.bottom - 1 || br.top < pr.top + 1) {
+          return true;
+        }
+      }
+      p = p.parentNode;
+    }
+    return false;
+  }
+
+  function locatetoCard(fp) {
+    var card = $('#prd-body [data-fp-card="' + fp + '"]');
+    if (!card) {
+      console.warn('未找到功能点 ' + fp + ' 的说明卡片');
+      return;
+    }
+    card.classList.remove('collapsed');
+    card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    card.classList.remove('target');
+    void card.offsetWidth;
+    card.classList.add('target');
+    setTimeout(function () { card.classList.remove('target'); }, 2600);
+  }
+
+  function locatetoProto(fp) {
+    var el = $('#proto .page.active [data-fp="' + fp + '"]') || $('#proto [data-fp="' + fp + '"]');
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('fp-flash');
+    void el.offsetWidth;
+    el.classList.add('fp-flash');
+    setTimeout(function () { el.classList.remove('fp-flash'); }, 3000);
+  }
+
+  /* =========================================================
+     7. 编辑态
+     ========================================================= */
+  function toggleEdit(force) {
+    editing = (typeof force === 'boolean') ? force : !editing;
+    $('#btn-edit').classList.toggle('on', editing);
+    $('#btn-edit').textContent = editing ? '退出编辑' : '编辑需求说明';
+    $('#edit-bar').classList.toggle('show', editing);
+    document.body.classList.toggle('editing', editing);
+    renderPrd(currentMenu);
+  }
+
+  /* =========================================================
+     8. 导出 HTML
+     ========================================================= */
+  function exportHtml() {
+    DATA.__savedAt = Date.now();
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch (e) {}
+
+    var clone = document.documentElement.cloneNode(true);
+
+    // 写回最新数据
+    var dataNode = clone.querySelector('#prd-data');
+    dataNode.textContent = JSON.stringify(DATA, null, 2).replace(/<\/script/gi, '<\\/script');
+
+    // 清运行时痕迹
+    Array.prototype.forEach.call(clone.querySelectorAll('.fp-bubble'), function (n) { n.parentNode.removeChild(n); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.fp-flash,.target'), function (n) {
+      n.classList.remove('fp-flash'); n.classList.remove('target');
+    });
+    Array.prototype.forEach.call(clone.querySelectorAll('[contenteditable]'), function (n) {
+      n.removeAttribute('contenteditable'); n.removeAttribute('data-path');
+    });
+    Array.prototype.forEach.call(clone.querySelectorAll('.editing'), function (n) { n.classList.remove('editing'); });
+    var eb = clone.querySelector('#edit-bar'); if (eb) eb.classList.remove('show');
+    var lt = clone.querySelector('#local-tip'); if (lt) lt.classList.remove('show');
+    var be = clone.querySelector('#btn-edit');
+    if (be) { be.classList.remove('on'); be.textContent = '编辑需求说明'; }
+
+    var name = (DATA.system || 'system') + '-' + (DATA.platform || 'web') + '-' + ts() + '.html';
+    download('<!DOCTYPE html>\n' + clone.outerHTML, name, 'text/html;charset=utf-8');
+  }
+
+  function download(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1200);
+  }
+
+  /* =========================================================
+     9. 全局事件
+     ========================================================= */
+  function bindGlobal() {
+    // 菜单切换（事件委托，原型里动态加的元素也能响应）
+    $('#proto').addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-menu-btn]') : null;
+      if (!btn) return;
+      e.preventDefault();
+      activateMenu(btn.dataset.menuBtn);
+    });
+
+    // 可编辑内容写回
+    document.addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.getAttribute || !el.getAttribute('data-path')) return;
+      var v = (el.innerText || '').replace(/\u00a0/g, ' ').replace(/\n+$/, '');
+      setByPath(DATA, el.getAttribute('data-path'), v);
+      scheduleSave();
+    });
+
+    // 工具栏
+    $('#btn-edit').addEventListener('click', function () { toggleEdit(); });
+    $('#btn-export').addEventListener('click', exportHtml);
+    $('#btn-export-2').addEventListener('click', exportHtml);
+    $('#btn-done').addEventListener('click', function () { toggleEdit(false); });
+
+    $('#btn-hide').addEventListener('click', function () { togglePrd(); });
+    $('#toggle-prd').addEventListener('click', function () { togglePrd(); });
+
+    $('#btn-discard-local').addEventListener('click', function () {
+      if (!window.confirm('丢弃本机修改并重新载入 HTML 文件里的版本？')) return;
+      try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      location.reload();
+    });
+
+    // 快捷键
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && editing) toggleEdit(false);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        exportHtml();
+      }
+    });
+
+    window.addEventListener('resize', function () { requestAnimationFrame(placeBubbles); });
+  }
+
+  function togglePrd() {
+    var hidden = document.body.classList.toggle('prd-hidden');
+    $('#btn-hide').textContent = hidden ? '‹ 需求说明' : '隐藏需求说明 ›';
+    $('#toggle-prd').textContent = hidden ? '‹ 需求说明' : '隐藏需求说明 ›';
+  }
+
+  /* =========================================================
+     10. 启动
+     ========================================================= */
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+})();
+</script>
+</body>
+</html>

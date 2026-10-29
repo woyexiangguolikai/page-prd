@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-platform="mobile">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__SYSTEM__ · 原型 + 需求说明（移动端）</title>
+<style>
+:root{
+  --primary:#2563EB;
+  --primary-weak:#EFF6FF;
+  --primary-line:#BFDBFE;
+  --ink:#0F172A;
+  --ink-2:#475569;
+  --ink-3:#94A3B8;
+  --line:#E2E8F0;
+  --line-2:#F1F5F9;
+  --bg:#EEF2F7;
+  --danger:#DC2626;
+  --warn-bg:#FFFBEB;
+  --warn-line:#F59E0B;
+  --warn-ink:#92400E;
+  --radius:8px;
+  --topbar-h:54px;
+  --phone-w:375px;
+  --phone-h:812px;
+  --prd-w:430px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--ink);background:var(--bg);font-size:13px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+
+/* ================= 图标系统 ================= */
+.svg-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{
+  width:1em;height:1em;display:inline-block;vertical-align:-0.14em;
+  fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;
+}
+.ic.fill{fill:currentColor;stroke:none}
+
+/* ================= 顶栏 ================= */
+#topbar{
+  height:var(--topbar-h);display:flex;align-items:center;gap:16px;
+  padding:0 16px;background:#fff;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:100;
+}
+.tb-left{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.tb-sys{font-weight:700;font-size:14px;letter-spacing:.2px}
+.tb-tag{
+  font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600;
+  background:#F0FDF4;color:#059669;border:1px solid #A7F3D0;
+}
+.tb-hint{display:flex;gap:14px;flex:1 1 auto;overflow:hidden;flex-wrap:wrap;max-height:34px}
+.tb-hint span{font-size:11px;color:var(--danger);white-space:nowrap;opacity:.9}
+.tb-hint span::before{content:"●";font-size:7px;vertical-align:2px;margin-right:4px;opacity:.7}
+.tb-right{display:flex;gap:8px;flex:0 0 auto}
+.btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  padding:5px 12px;border-radius:6px;font-size:12px;transition:.15s;
+}
+.btn:hover{border-color:var(--primary-line);color:var(--primary);background:var(--primary-weak)}
+.btn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.on:hover{background:#1D4ED8;color:#fff}
+
+/* ================= 双栏 ================= */
+#split{display:flex;height:calc(100vh - var(--topbar-h))}
+#proto{
+  flex:1 1 auto;min-width:0;overflow:auto;padding:24px;
+  display:flex;justify-content:center;align-items:flex-start;
+}
+#proto::-webkit-scrollbar,#prd::-webkit-scrollbar{width:8px;height:8px}
+#proto::-webkit-scrollbar-thumb,#prd::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:4px}
+#prd{
+  flex:0 0 var(--prd-w);width:var(--prd-w);background:#fff;border-left:1px solid var(--line);
+  overflow-y:auto;overflow-x:hidden;padding:20px 20px 80px;
+}
+body.prd-hidden #prd{display:none}
+#toggle-prd{
+  position:fixed;right:calc(var(--prd-w) + 20px);bottom:22px;z-index:200;
+  height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);box-shadow:0 4px 14px rgba(15,23,42,.14);
+  font-size:12px;font-weight:600;transition:.18s;
+}
+#toggle-prd:hover{color:var(--primary);border-color:var(--primary-line)}
+
+/* ================= 手机外框 ================= */
+.page{display:none}
+.page.active{display:block}
+.phone{
+  width:var(--phone-w);height:var(--phone-h);
+  background:#fff;border-radius:40px;border:10px solid #111827;
+  box-shadow:0 24px 60px -18px rgba(15,23,42,.45),0 0 0 2px #374151;
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
+  flex:0 0 auto;
+}
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:126px;height:24px;background:#111827;border-radius:0 0 15px 15px;z-index:20;
+}
+.statusbar{
+  height:42px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 24px 5px;font-size:12px;font-weight:600;color:var(--ink);background:#fff;z-index:15;
+}
+.statusbar .right{display:flex;gap:5px;align-items:center;font-size:11px;letter-spacing:.5px}
+.phone-body{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;background:#F7F9FC;position:relative}
+.phone-body::-webkit-scrollbar{width:0;display:none}
+
+/* 屏内切换 */
+.screen{display:none;min-height:100%;padding-bottom:8px}
+.screen.active{display:block}
+
+/* 二级页面导航栏 */
+.navbar{
+  height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;
+  background:#fff;border-bottom:1px solid var(--line-2);position:sticky;top:0;z-index:10;
+}
+.navbar .rt{padding-right:12px;margin-right:4px}
+.navbar .back{
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:19px;color:var(--ink);cursor:pointer;margin-left:-4px;
+}
+.navbar .ttl{font-size:15px;font-weight:600;flex:1}
+.navbar .rt{font-size:18px;color:var(--ink-2);cursor:pointer;display:flex;align-items:center}
+
+/* tabbar */
+.tabbar{
+  height:56px;flex:0 0 auto;display:flex;background:#fff;border-top:1px solid var(--line-2);
+  z-index:15;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font-size:10px;color:var(--ink-3);cursor:pointer;transition:.15s;position:relative;
+}
+.tab .ic{font-size:19px;line-height:1}
+.tab.active{color:var(--primary);font-weight:600}
+.tab .badge{
+  position:absolute;top:7px;right:calc(50% - 18px);min-width:15px;height:15px;
+  background:#EF4444;color:#fff;font-size:9px;border-radius:8px;line-height:15px;
+  text-align:center;padding:0 4px;font-weight:600;
+}
+
+/* ---------- 首页 ---------- */
+.m-search{padding:8px 14px 10px;background:#fff}
+.m-search .box{
+  height:34px;border-radius:17px;background:#F1F5F9;display:flex;align-items:center;
+  gap:7px;padding:0 13px;color:var(--ink-3);font-size:12.5px;
+}
+.m-banner{margin:0 14px 12px;height:112px;border-radius:10px;background:linear-gradient(112deg,#1D4ED8,#2563EB 42%,#3B82F6 72%,#60A5FA);position:relative;overflow:hidden}
+.m-banner .bn-art{position:absolute;right:-4px;bottom:-14px;width:168px;height:168px;pointer-events:none}
+.m-banner .txt{position:absolute;left:18px;top:26px;color:#fff;z-index:2}
+.m-banner .txt b{display:block;font-size:17px;letter-spacing:.3px;margin-bottom:4px}
+.m-banner .txt span{font-size:11.5px;opacity:.92}
+.m-cats{display:flex;background:#fff;padding:14px 6px;margin-bottom:10px}
+.m-cat{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--ink-2);cursor:pointer}
+.m-cat .ci{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px}
+.m-sec-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
+.m-sec-h b{font-size:14px}
+.m-sec-h span{font-size:11.5px;color:var(--ink-3)}
+.m-shop{
+  background:#fff;margin:0 14px 10px;border-radius:10px;padding:12px;display:flex;gap:11px;cursor:pointer;
+  transition:.15s;
+}
+.m-shop:active{background:#FAFCFE}
+.m-shop .ph{
+  width:62px;height:62px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-size:24px;background:var(--primary-weak);color:var(--primary);
+}
+.m-shop .info{flex:1;min-width:0}
+.m-shop .info h4{margin:0 0 4px;font-size:14px;font-weight:600}
+.m-shop .meta{font-size:11.5px;color:var(--ink-3);display:flex;gap:9px;align-items:center}
+.m-shop .meta em{color:#F59E0B;font-style:normal;font-weight:600}
+.m-shop .tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.mini-tag{font-size:10px;padding:0 6px;line-height:16px;border-radius:3px;background:#F1F5F9;color:#64748B}
+.mini-tag.hot{background:#FEF2F2;color:#DC2626}
+
+/* ---------- 店铺详情 ---------- */
+.sd-hero{height:132px;background:linear-gradient(120deg,#1E40AF,#3B82F6);position:relative;display:flex;align-items:flex-end;padding:14px}
+.sd-hero .nm{color:#fff}
+.sd-hero .nm b{font-size:17px;display:block;margin-bottom:5px}
+.sd-hero .nm span{font-size:11.5px;opacity:.9}
+.sd-tabs{display:flex;background:#fff;border-bottom:1px solid var(--line-2);position:sticky;top:0;z-index:9;padding-top:10px}
+.sd-tabs div{flex:1;text-align:center;padding:11px 0;font-size:13px;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent}
+.sd-tabs div.active{color:var(--primary);font-weight:600;border-bottom-color:var(--primary)}
+.dish{background:#fff;padding:13px 14px;display:flex;gap:11px;border-bottom:1px solid var(--line-2)}
+.dish .ph{width:64px;height:64px;border-radius:9px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:26px;flex:0 0 auto}
+.dish .info{flex:1;min-width:0}
+.dish h4{margin:0 0 3px;font-size:13.5px;font-weight:600}
+.dish .d{font-size:11px;color:var(--ink-3);margin-bottom:7px}
+.dish .row{display:flex;align-items:center;justify-content:space-between}
+.price{color:#DC2626;font-weight:700;font-size:14px;white-space:nowrap;line-height:1.2;display:flex;align-items:baseline;gap:1px}
+.price b{font-size:15px;font-weight:700}
+.price em{font-size:10px;font-style:normal;font-weight:500;line-height:1}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper .m{width:21px;height:21px;border-radius:50%;border:1px solid var(--primary);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;background:#fff}
+.stepper .m.fill{background:var(--primary);color:#fff}
+.stepper .n{font-size:12.5px;min-width:12px;text-align:center}
+.cart-bar{
+  position:sticky;bottom:0;height:54px;background:#fff;border-top:1px solid var(--line-2);
+  display:flex;align-items:center;gap:10px;padding:0 14px;
+}
+.cart-bar .cnt{flex:1;font-size:12px;color:var(--ink-2)}
+.cart-bar .cnt b{color:#DC2626;font-size:15px}
+.cart-bar .go{height:34px;padding:0 20px;border-radius:17px;background:var(--primary);color:#fff;border:none;font-size:13px;font-weight:500}
+
+/* ---------- 订单 ---------- */
+.otabs{display:flex;background:#fff;padding:10px 4px 0;border-bottom:1px solid var(--line-2);position:sticky;top:0;z-index:9}
+.otabs div{flex:1;text-align:center;padding:12px 0;font-size:12.5px;color:var(--ink-2);cursor:pointer;position:relative}
+.otabs div.active{color:var(--primary);font-weight:600}
+.otabs div.active::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:20px;height:2.5px;border-radius:2px;background:var(--primary)}
+.ocard{background:#fff;margin:10px 14px 0;border-radius:10px;padding:12px 13px}
+.ocard .oh{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--line-2)}
+.ocard .oh .sn{font-size:11.5px;color:var(--ink-3)}
+.ostatus{font-size:12px;font-weight:600}
+.ostatus.wait{color:#DC2626}
+.ostatus.going{color:#2563EB}
+.ostatus.done{color:#94A3B8}
+.oitems{display:flex;gap:9px;padding:10px 0}
+.oitems .ph{width:52px;height:52px;border-radius:7px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:22px}
+.oitems .txt{flex:1;min-width:0}
+.oitems .txt b{display:block;font-size:13px;font-weight:600;margin-bottom:3px}
+.oitems .txt span{font-size:11px;color:var(--ink-3)}
+.ocard .of{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line-2)}
+.ocard .of .sum{font-size:12px;color:var(--ink-2)}
+.ocard .of .sum b{color:var(--ink);font-size:14px}
+.ocard .of .acts{display:flex;gap:7px}
+.sbtn{height:27px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:12px}
+.sbtn.primary{border-color:var(--primary);background:var(--primary);color:#fff}
+
+/* ---------- 购物车 / 确认订单 ---------- */
+.citem{background:#fff;padding:12px 14px;display:flex;gap:11px;border-bottom:1px solid var(--line-2);align-items:center}
+.citem .ph{width:56px;height:56px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:24px}
+.citem .info{flex:1;min-width:0}
+.citem h4{margin:0 0 4px;font-size:13.5px}
+.citem .sp{font-size:11px;color:var(--ink-3)}
+.citem .rt{text-align:right}
+.amt-row{background:#fff;margin-top:9px;padding:13px 14px;font-size:12.5px;color:var(--ink-2)}
+.amt-row .l{display:flex;justify-content:space-between;margin-bottom:8px}
+.amt-row .l:last-child{margin-bottom:0;padding-top:9px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink)}
+.amt-row .l:last-child b{color:#DC2626;font-size:15px}
+
+/* ---------- 我的 ---------- */
+.me-head{background:linear-gradient(155deg,#1E40AF,#3B82F6);padding:22px 18px 46px;color:#fff;position:relative}
+.me-head .u{display:flex;align-items:center;gap:12px}
+.me-head .av{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:700;border:2px solid rgba(255,255,255,.45)}
+.me-head .u b{font-size:16px;display:block;margin-bottom:3px}
+.me-head .u span{font-size:11.5px;opacity:.88}
+.me-card{
+  background:#fff;margin:-32px 14px 10px;border-radius:12px;padding:15px 6px;display:flex;
+  box-shadow:0 6px 18px -10px rgba(15,23,42,.2);
+}
+.me-card .it{flex:1;text-align:center;cursor:pointer}
+.me-card .it b{display:block;font-size:17px;margin-bottom:2px}
+.me-card .it span{font-size:11px;color:var(--ink-3)}
+.me-list{background:#fff;margin:10px 14px;border-radius:10px}
+.me-row{display:flex;align-items:center;gap:11px;padding:13px 26px 13px 14px;border-bottom:1px solid var(--line-2);font-size:13.5px;cursor:pointer}
+.me-row:last-child{border-bottom:none}
+.me-row .mi{width:18px;height:18px;color:var(--ink-2);stroke-width:1.7}
+.me-row .ar{margin-left:auto;color:var(--ink-3);width:15px;height:15px;stroke-width:2}
+
+/* ================= 编号气泡 ================= */
+[data-fp]{position:relative}
+.fp-bubble{
+  position:absolute;top:-7px;right:-9px;left:auto;z-index:60;
+  min-width:15px;height:15px;padding:0 4px;border-radius:8px;
+  background:var(--primary);color:#fff;font-size:9.5px;font-weight:700;
+  line-height:15px;text-align:center;cursor:pointer;user-select:none;
+  box-shadow:0 2px 6px rgba(37,99,235,.42);border:1.5px solid #fff;transition:.15s;
+  opacity:.85;
+}
+/* 手动指定气泡方位，覆盖自动判定 */
+[data-fp][data-fp-side="tl"] > .fp-bubble{top:-8px;left:-9px;right:auto}
+[data-fp][data-fp-side="bl"] > .fp-bubble{bottom:-8px;left:-9px;top:auto;right:auto}
+[data-fp][data-fp-side="br"] > .fp-bubble{bottom:-8px;right:-9px;top:auto;left:auto}
+[data-fp][data-fp-side="in"] > .fp-bubble{top:2px;right:2px;left:auto;opacity:.7}
+#proto:hover .fp-bubble{opacity:1}
+.fp-bubble:hover{transform:scale(1.16)}
+@keyframes fpFlash{
+  0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}
+  30%{box-shadow:0 0 0 4px rgba(37,99,235,.4)}
+}
+.fp-flash{animation:fpFlash 1.4s ease-out 2;border-radius:6px}
+
+/* ================= 右侧说明 ================= */
+.prd-title{
+  font-size:17px;font-weight:700;margin:0 0 3px;letter-spacing:-.2px;
+  padding-bottom:10px;border-bottom:2px solid var(--ink);
+}
+.prd-title .seq{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;
+  font-size:12px;margin-right:8px;vertical-align:1px;
+}
+.prd-sub{margin:8px 0 20px;color:var(--ink-3);font-size:12px;line-height:1.7}
+.sec{margin-bottom:24px}
+.sec-h{
+  font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--ink-3);
+  text-transform:uppercase;margin:0 0 11px;display:flex;align-items:center;gap:8px;
+}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec-h .del{border:none;background:transparent;color:var(--ink-3);font-size:11px;cursor:pointer;padding:0 4px;opacity:.6}
+.sec-h .del:hover{color:var(--danger);opacity:1}
+
+.fp-card{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;background:#fff;overflow:hidden;transition:.16s}
+.fp-card:hover{border-color:#CBD5E1}
+.fp-card.target{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.fp-card-head{display:flex;align-items:center;gap:9px;padding:10px 12px;background:#F8FAFC;cursor:pointer;user-select:none}
+.fp-card-head .no{
+  flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.fp-card-head .nm{font-weight:600;font-size:13px;flex:1;color:var(--ink)}
+.fp-card-head .caret{color:var(--ink-3);font-size:10px;transition:.2s}
+.fp-card.collapsed .caret{transform:rotate(-90deg)}
+.fp-card.collapsed .fp-card-body{display:none}
+.fp-card-body{padding:14px;border-top:1px solid var(--line-2)}
+.fp-desc{margin:0 0 14px;color:var(--ink-2);font-size:12.5px;line-height:1.75}
+.sub-h{font-size:11.5px;font-weight:700;color:var(--ink);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+.sub-h::before{content:"";width:3px;height:11px;border-radius:2px;background:var(--primary)}
+.sub-h:first-child{margin-top:0}
+
+.spec-tbl{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed}
+.spec-tbl.tight{font-size:10.5px}
+.spec-tbl.tight th,.spec-tbl.tight td{padding:5px 5px}
+.spec-tbl.tight th:nth-child(1),.spec-tbl.tight td:nth-child(1),
+.spec-tbl.tight th:nth-child(2),.spec-tbl.tight td:nth-child(2),
+.spec-tbl.tight th:nth-child(3),.spec-tbl.tight td:nth-child(3){white-space:nowrap}
+.tbl-wrap{overflow-x:auto;margin:0 -1px}
+.tbl-wrap .spec-tbl{min-width:300px}
+.spec-tbl th{
+  background:#F1F5F9;color:var(--ink-2);font-weight:600;font-size:11px;
+  padding:6px 8px;border:1px solid var(--line);text-align:left;white-space:nowrap;
+}
+.spec-tbl td{padding:6px 8px;border:1px solid var(--line);color:var(--ink-2);vertical-align:top;word-break:break-word;line-height:1.65}
+.spec-tbl td.lock{background:#F8FAFC;position:relative;padding-right:20px}
+.spec-tbl td.lock::after{content:"🔒";position:absolute;right:5px;top:5px;font-size:8px;opacity:.42}
+.spec-tbl td.editable{cursor:text}
+body.editing .spec-tbl td.editable{
+  background:var(--warn-bg);box-shadow:inset 0 -1px 0 0 var(--warn-line);
+  outline:1px dashed rgba(245,158,11,.55);outline-offset:-3px;
+}
+body.editing .spec-tbl td.editable:focus{background:#FEF3C7;outline:2px solid var(--warn-line);outline-offset:-2px}
+body.editing .ed-block{
+  background:var(--warn-bg);outline:1px dashed rgba(245,158,11,.55);outline-offset:3px;
+  border-radius:3px;cursor:text;
+}
+body.editing .ed-block:focus{background:#FEF3C7;outline:2px solid var(--warn-line);outline-offset:2px}
+
+.rules{margin:0;padding-left:0;list-style:none;counter-reset:r}
+.rules li{
+  position:relative;padding:5px 0 5px 22px;font-size:12.5px;color:var(--ink-2);
+  line-height:1.7;border-bottom:1px dashed var(--line-2);
+}
+.rules li:last-child{border-bottom:none}
+.rules li::before{
+  counter-increment:r;content:"R" counter(r);position:absolute;left:0;top:6px;
+  font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-weak);
+  border-radius:4px;padding:0 4px;line-height:15px;
+}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0;padding:0;list-style:none}
+.flow li{font-size:11.5px;padding:3px 9px;border-radius:12px;background:#F1F5F9;color:var(--ink-2);border:1px solid var(--line)}
+.flow li.arrow{background:none;border:none;color:var(--ink-3);padding:0 1px}
+
+/* ---------- 布局说明 ---------- */
+.lay-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-2)}
+.lay-item:first-child{padding-top:0}
+.lay-item:last-child{border-bottom:none;padding-bottom:0}
+.lay-k{flex:0 0 68px;font-size:11.5px;color:var(--ink-3);line-height:1.7;white-space:nowrap}
+.lay-v{flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+
+/* ---------- 交互说明 ---------- */
+.ia-card{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff;overflow:hidden}
+.ia-h{padding:8px 12px;background:#F8FAFC;border-bottom:1px solid var(--line-2);font-weight:600;font-size:12.5px;color:var(--ink)}
+.ia-b{padding:10px 12px}
+.ia-row{display:flex;gap:8px;font-size:12px;margin-bottom:7px;line-height:1.65}
+.ia-row:last-child{margin-bottom:0}
+.ia-row b{flex:0 0 58px;color:var(--ink-3);font-weight:400}
+.ia-row span{flex:1;min-width:0;color:var(--ink-2)}
+
+/* ---------- 前置条件 ---------- */
+.pre{display:flex;gap:8px;align-items:flex-start;background:#F8FAFC;border-left:3px solid #94A3B8;border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:12px;font-size:12px;line-height:1.65}
+.pre b{flex:0 0 auto;color:var(--ink-3);font-weight:600}
+.pre span{flex:1;min-width:0;color:var(--ink-2)}
+
+/* ---------- 业务流程（竖向时间线） ---------- */
+.flow-v{list-style:none;margin:0;padding:0;position:relative}
+.flow-v::before{content:"";position:absolute;left:11px;top:16px;bottom:16px;width:2px;background:var(--line);border-radius:1px}
+.flow-v li{position:relative;padding:0 0 12px 32px;font-size:12.5px;color:var(--ink-2);line-height:1.6;min-height:24px}
+.flow-v li:last-child{padding-bottom:0}
+.flow-v .nd{position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:#fff;border:1.5px solid var(--primary-line);color:var(--primary);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1}
+.flow-v li.start .nd{background:var(--primary);border-color:var(--primary);color:#fff}
+.flow-v li.end .nd{background:#059669;border-color:#059669;color:#fff}
+.flow-v li.branch .nd{background:#FFFBEB;border-color:#F59E0B;color:#B45309;border-radius:6px}
+.flow-v .note{display:inline-block;margin-top:5px;padding:3px 8px;border-radius:5px;background:#FFFBEB;border:1px solid #FDE68A;color:#B45309;font-size:11.5px;line-height:1.5}
+
+/* ---------- 异常场景 ---------- */
+.ex-card{border:1px solid var(--line);border-left:3px solid #F59E0B;border-radius:0 8px 8px 0;margin-bottom:10px;background:#fff}
+.ex-h{padding:9px 12px;background:#FFFDF7;border-bottom:1px solid var(--line-2);font-weight:600;font-size:12.5px;color:var(--ink)}
+.ex-b{padding:9px 12px}
+.ex-row{display:flex;gap:8px;font-size:12px;margin-bottom:6px;line-height:1.65}
+.ex-row:last-child{margin-bottom:0}
+.ex-row b{flex:0 0 58px;color:var(--ink-3);font-weight:400}
+.ex-row span{flex:1;min-width:0;color:var(--ink-2)}
+.ex-row .msg{color:#B45309;background:#FFFBEB;border-radius:4px;padding:1px 6px;font-size:11.5px}
+/* 功能点内的异常：紧凑版 */
+.ex-card.mini{border-left-width:2px;border-radius:0 6px 6px 0;margin-bottom:8px}
+.ex-card.mini .ex-h{padding:7px 10px;font-size:12px;font-weight:600}
+.ex-card.mini .ex-b{padding:7px 10px}
+.ex-card.mini .ex-row{font-size:11.5px;margin-bottom:4px;line-height:1.6}
+.ex-card.mini .ex-row b{flex:0 0 52px}
+/* 章节说明行 */
+.sec-note{font-size:11.5px;color:var(--ink-3);line-height:1.65;margin:-4px 0 10px;padding-left:1px}
+
+.kv{display:grid;grid-template-columns:76px 1fr;gap:7px 10px;font-size:12px;margin:0}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;color:var(--ink-2)}
+.para{margin:0 0 10px;font-size:12.5px;color:var(--ink-2);line-height:1.8}
+.bullets{margin:0;padding-left:17px;font-size:12.5px;color:var(--ink-2);line-height:1.85}
+.add-sec{width:100%;border:1px dashed #CBD5E1;background:#FCFDFE;color:var(--ink-3);padding:9px;border-radius:6px;font-size:12px;margin-top:4px;transition:.15s}
+.add-sec:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-weak)}
+
+#local-tip{
+  display:none;align-items:center;gap:10px;margin:0 0 16px;padding:9px 12px;
+  background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;font-size:11.5px;color:var(--warn-ink);
+}
+#local-tip.show{display:flex}
+#local-tip button{margin-left:auto;border:1px solid #FDE68A;background:#fff;color:var(--warn-ink);border-radius:4px;padding:2px 8px;font-size:11px}
+
+#edit-bar{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:300;
+  background:var(--warn-ink);color:#fff;padding:8px 20px;font-size:12px;align-items:center;gap:14px;
+}
+#edit-bar.show{display:flex}
+#edit-bar b{font-weight:700}
+#edit-bar .sp{flex:1}
+#edit-bar button{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:5px;padding:4px 12px;font-size:12px}
+#edit-bar button:hover{background:rgba(255,255,255,.24)}
+body.editing{padding-bottom:44px}
+
+@media (max-width:1280px){
+  :root{--prd-w:390px}
+  .tb-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SVG 图标库（内联，无外部依赖，生产可直接复用）
+     用法：<svg class="ic"><use href="#i-home"/></svg>
+     ============================================================ -->
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/><path d="M9.6 21v-5.6h4.8V21"/></symbol>
+  <symbol id="i-order" viewBox="0 0 24 24"><rect x="4.5" y="3" width="15" height="18" rx="2.2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.4l2.3 11a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.3L20.5 7.4H6.2"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.6c0-3.7 3.3-5.9 7.2-5.9s7.2 2.2 7.2 5.9"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 5 5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 5 7 7-7 7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m14.5 5-7 7 7 7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.4 2.6 5.4 5.9.8-4.3 4.1 1.1 5.8-5.3-2.9-5.3 2.9 1.1-5.8-4.3-4.1 5.9-.8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.1 1.9"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.2s6.6-6.1 6.6-10.7a6.6 6.6 0 1 0-13.2 0C5.4 15.1 12 21.2 12 21.2Z"/><circle cx="12" cy="10.4" r="2.3"/></symbol>
+  <symbol id="i-burger" viewBox="0 0 24 24"><path d="M4 9.6c0-2.8 3.6-4.8 8-4.8s8 2 8 4.8"/><path d="M3.4 12.6h17.2"/><path d="M4.6 15.4h14.8a1 1 0 0 1 1 1v.8a2.4 2.4 0 0 1-2.4 2.4H6a2.4 2.4 0 0 1-2.4-2.4v-.8a1 1 0 0 1 1-1Z"/></symbol>
+  <symbol id="i-noodle" viewBox="0 0 24 24"><path d="M3.4 11.4h17.2"/><path d="M4.6 11.4c0 4.6 3.3 7.9 7.4 7.9s7.4-3.3 7.4-7.9"/><path d="M9 8c0-1 .9-1.6.9-2.6M13 8c0-1 .9-1.6.9-2.6M17 8c0-1 .9-1.6.9-2.6"/></symbol>
+  <symbol id="i-salad" viewBox="0 0 24 24"><path d="M20.2 4.2c0 9.2-6 13.2-12 13.2-2.5 0-4.2-1.6-4.2-4.2 0-6 6-9 16.2-9Z"/><path d="M12.2 12.2c-2 2.1-4 3.7-7 4.7"/></symbol>
+  <symbol id="i-drink" viewBox="0 0 24 24"><path d="M6.2 7.4h11.6l-1.2 11.9a2 2 0 0 1-2 1.8H9.4a2 2 0 0 1-2-1.8Z"/><path d="M5.2 7.4h13.6"/><path d="M9.6 3.8 8.6 7.4M14.4 3.8l1 3.6"/></symbol>
+  <symbol id="i-shop" viewBox="0 0 24 24"><path d="M4.4 9.2h15.2v9.4a2 2 0 0 1-2 2H6.4a2 2 0 0 1-2-2Z"/><path d="M3 9.2 4.6 4.4h14.8L21 9.2"/><path d="M9.4 20.6v-5.4h5.2v5.4"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3.2 8.2a2 2 0 0 1 2-2h13.6a2 2 0 0 1 2 2v1.6a2 2 0 0 0 0 4v1.6a2 2 0 0 1-2 2H5.2a2 2 0 0 1-2-2v-1.6a2 2 0 0 0 0-4Z"/><path d="M13.6 6.2v11" stroke-dasharray="1.6 2.2"/></symbol>
+  <symbol id="i-invoice" viewBox="0 0 24 24"><path d="M6.2 3h8.6l3.4 3.4V21l-3-1.5-3 1.5-3-1.5-3 1.5V3Z"/><path d="M9.2 8.4h5.6M9.2 12.4h5.6"/></symbol>
+  <symbol id="i-service" viewBox="0 0 24 24"><path d="M4.2 14.2v-2.4a7.8 7.8 0 0 1 15.6 0v2.4"/><rect x="2.2" y="13" width="3.8" height="6.2" rx="1.9"/><rect x="18" y="13" width="3.8" height="6.2" rx="1.9"/><path d="M19.9 19.2v.4a2.6 2.6 0 0 1-2.6 2.4h-2"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.1 14.6a1.6 1.6 0 0 0 .3 1.8l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-.9 1.4v.3a1.9 1.9 0 1 1-3.8 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.4-.9h-.3a1.9 1.9 0 1 1 0-3.8h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.4v-.3a1.9 1.9 0 1 1 3.8 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.4 1h.3a1.9 1.9 0 1 1 0 3.8h-.1a1.6 1.6 0 0 0-1.5 1Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 4.8 4.8L19.5 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 24 16"><rect x="0" y="9" width="3" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="5" y="6" width="3" height="9" rx="1" fill="currentColor" stroke="none"/><rect x="10" y="3" width="3" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="15" y="0" width="3" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 28 14"><rect x="0.8" y="1.2" width="21" height="11.6" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="3" y="3.4" width="16.5" height="7.2" rx="1.6" fill="currentColor" stroke="none"/><path d="M24.2 5v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+
+<header id="topbar">
+  <div class="tb-left">
+    <span class="tb-sys" id="tb-sys">__SYSTEM__</span>
+    <span class="tb-tag" id="tb-tag">移动端</span>
+  </div>
+  <div class="tb-hint" id="tb-hint">
+    <span>右侧说明跟随底部 tab 切换</span>
+    <span>点「编辑需求说明」可直接改，自动存本机</span>
+    <span>点编号气泡可定位到具体功能描述（编号对应功能点，非需求条目）</span>
+    <span>带 🔒 的列与左侧原型强绑定，不可修改</span>
+  </div>
+  <div class="tb-right">
+    <button class="btn" id="btn-edit">编辑需求说明</button>
+    <button class="btn" id="btn-export">导出 HTML</button>
+    <button class="btn" id="btn-hide">隐藏需求说明 ›</button>
+  </div>
+</header>
+
+<div id="split">
+  <!-- ==========================================================
+       左侧原型区（移动端）—— AI 生成的界面写在这里
+       规则：
+       1. 每个 tab 模块一个 .page，data-menu 对应 PRD_DATA.menus[].id
+       2. tabbar 项加 data-menu-btn="<menu id>"，点击切换模块 + 右侧说明
+       3. 模块内的二级页面（详情/表单）用 .screen，data-screen="<名>"
+          用 data-screen-go="<名>" 跳转；右侧说明只跟模块走，不跟 screen 走
+       4. 需要说明的功能元素加 data-fp="<编号>"
+       ========================================================== -->
+  <section id="proto">
+
+    <!-- ========== tab 1：首页 ========== -->
+    <div class="page active" data-menu="home">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right"><svg class="ic" style="width:17px;height:11px"><use href="#i-signal"/></svg><svg class="ic" style="width:25px;height:12px"><use href="#i-battery"/></svg></span>
+        </div>
+        <div class="phone-body">
+
+          <!-- 屏 1：首页 -->
+          <div class="screen active" data-screen="list">
+            <div class="m-search">
+              <div class="box" data-fp="1"><svg class="ic" style="font-size:15px"><use href="#i-search"/></svg><span>搜索店铺、菜品</span></div>
+            </div>
+            <div class="m-banner">
+              <div class="txt"><b>午餐补贴上线</b><span>工作日 11:00-13:00 满 20 减 5</span></div>
+              <svg class="bn-art" viewBox="0 0 168 168" aria-hidden="true">
+                <circle cx="96" cy="88" r="76" fill="rgba(255,255,255,.13)"/>
+                <circle cx="120" cy="60" r="44" fill="rgba(255,255,255,.11)"/>
+                <path d="M64 96h60a30 30 0 0 1-60 0Z" fill="#fff" opacity=".94"/>
+                <path d="M58 96h72" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/>
+                <path d="M80 80c0-7 6-9 6-16M97 80c0-7 6-9 6-16M114 80c0-7 6-9 6-16"
+                      stroke="#fff" stroke-width="4.2" stroke-linecap="round" opacity=".6"/>
+                <circle cx="72" cy="52" r="4" fill="#fff" opacity=".5"/>
+                <circle cx="132" cy="112" r="3" fill="#fff" opacity=".45"/>
+              </svg>
+            </div>
+            <div class="m-cats">
+              <div class="m-cat" data-fp="2"><div class="ci" style="background:#FFF7ED;color:#EA580C"><svg class="ic"><use href="#i-burger"/></svg></div>快餐</div>
+              <div class="m-cat"><div class="ci" style="background:#FFFBEB;color:#D97706"><svg class="ic"><use href="#i-noodle"/></svg></div>面食</div>
+              <div class="m-cat"><div class="ci" style="background:#ECFDF5;color:#059669"><svg class="ic"><use href="#i-salad"/></svg></div>轻食</div>
+              <div class="m-cat"><div class="ci" style="background:#EFF6FF;color:#2563EB"><svg class="ic"><use href="#i-drink"/></svg></div>饮品</div>
+            </div>
+            <div class="m-sec-h"><b>附近商家</b><span>按距离 ›</span></div>
+            <div class="m-shop" data-fp="3" data-screen-go="detail">
+              <div class="ph" style="background:linear-gradient(135deg,#DBEAFE,#BFDBFE);color:#1D4ED8"><svg class="ic" style="font-size:28px"><use href="#i-shop"/></svg></div>
+              <div class="info">
+                <h4>青禾小馆 · 一楼档口</h4>
+                <div class="meta"><em>★ 4.8</em><span>月售 1240</span><span>1.2km</span></div>
+                <div class="tags"><span class="mini-tag hot">满20减5</span><span class="mini-tag">30分钟达</span></div>
+              </div>
+            </div>
+            <div class="m-shop">
+              <div class="ph" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);color:#B45309"><svg class="ic" style="font-size:28px"><use href="#i-noodle"/></svg></div>
+              <div class="info">
+                <h4>面面俱到 · 二食堂</h4>
+                <div class="meta"><em>★ 4.6</em><span>月售 880</span><span>0.8km</span></div>
+                <div class="tags"><span class="mini-tag">新客立减3</span></div>
+              </div>
+            </div>
+            <div class="m-shop">
+              <div class="ph" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);color:#047857"><svg class="ic" style="font-size:28px"><use href="#i-salad"/></svg></div>
+              <div class="info">
+                <h4>轻卡轻食 · 西门店</h4>
+                <div class="meta"><em>★ 4.9</em><span>月售 2100</span><span>1.6km</span></div>
+                <div class="tags"><span class="mini-tag">准时达</span></div>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+          </div>
+
+          <!-- 屏 2：店铺详情 -->
+          <div class="screen" data-screen="detail">
+            <div class="navbar">
+              <div class="back" data-screen-go="list"><svg class="ic"><use href="#i-left"/></svg></div>
+              <div class="ttl">青禾小馆</div>
+              <div class="rt"><svg class="ic"><use href="#i-more"/></svg></div>
+            </div>
+            <div class="sd-hero">
+              <div class="nm"><b>青禾小馆 · 一楼档口</b><span>★ 4.8 · 月售 1240 · 30 分钟送达</span></div>
+            </div>
+            <div class="sd-tabs">
+              <div class="active">点餐</div><div>评价 328</div><div>商家</div>
+            </div>
+            <div class="dish">
+              <div class="ph" style="background:#FEF3C7;color:#B45309"><svg class="ic"><use href="#i-burger"/></svg></div>
+              <div class="info">
+                <h4>招牌卤肉饭</h4>
+                <div class="d">卤肉 / 时蔬 / 米饭</div>
+                <div class="row">
+                  <div class="price"><em>¥</em><b>18</b></div>
+                  <div class="stepper" data-fp="4"><span class="m"><svg class="ic"><use href="#i-minus"/></svg></span><span class="n">1</span><span class="m fill"><svg class="ic"><use href="#i-plus"/></svg></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="dish">
+              <div class="ph" style="background:#FFFBEB;color:#D97706"><svg class="ic"><use href="#i-noodle"/></svg></div>
+              <div class="info">
+                <h4>菌菇鸡丝面</h4>
+                <div class="d">手工面 / 鸡丝 / 菌菇汤底</div>
+                <div class="row">
+                  <div class="price"><em>¥</em><b>16</b></div>
+                  <div class="stepper"><span class="m"><svg class="ic"><use href="#i-minus"/></svg></span><span class="n">0</span><span class="m fill"><svg class="ic"><use href="#i-plus"/></svg></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="dish">
+              <div class="ph" style="background:#ECFDF5;color:#059669"><svg class="ic"><use href="#i-salad"/></svg></div>
+              <div class="info">
+                <h4>时蔬例汤</h4>
+                <div class="d">当日新鲜 / 小份</div>
+                <div class="row">
+                  <div class="price"><em>¥</em><b>6</b></div>
+                  <div class="stepper"><span class="m"><svg class="ic"><use href="#i-minus"/></svg></span><span class="n">0</span><span class="m fill"><svg class="ic"><use href="#i-plus"/></svg></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="cart-bar" data-fp="5">
+              <div class="cnt">已选 1 件 · 合计 <b>¥18</b></div>
+              <button class="go">去结算</button>
+            </div>
+          </div>
+
+        </div>
+        <div class="tabbar">
+          <div class="tab active" data-menu-btn="home"><svg class="ic"><use href="#i-home"/></svg>首页</div>
+          <div class="tab" data-menu-btn="orders"><svg class="ic"><use href="#i-order"/></svg>订单</div>
+          <div class="tab" data-menu-btn="cart"><svg class="ic"><use href="#i-cart"/></svg>购物车<span class="badge">2</span></div>
+          <div class="tab" data-menu-btn="me"><svg class="ic"><use href="#i-user"/></svg>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== tab 2：订单 ========== -->
+    <div class="page" data-menu="orders">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right"><svg class="ic" style="width:17px;height:11px"><use href="#i-signal"/></svg><svg class="ic" style="width:25px;height:12px"><use href="#i-battery"/></svg></span>
+        </div>
+        <div class="phone-body">
+
+          <!-- 屏 1：订单列表 -->
+          <div class="screen active" data-screen="list">
+            <div class="otabs">
+              <div class="active" data-fp="6">全部</div>
+              <div>待付款</div>
+              <div>待取餐</div>
+              <div>已完成</div>
+            </div>
+            <div class="ocard" data-fp="7" data-screen-go="detail" style="cursor:pointer">
+              <div class="oh">
+                <span class="sn">订单号 20261029103512</span>
+                <span class="ostatus wait">待付款</span>
+              </div>
+              <div class="oitems">
+                <div class="ph" style="background:#FEF3C7;color:#B45309"><svg class="ic"><use href="#i-burger"/></svg></div>
+                <div class="txt"><b>青禾小馆 · 一楼档口</b><span>招牌卤肉饭 ×1，时蔬例汤 ×1</span></div>
+              </div>
+              <div class="of">
+                <div class="sum">合计 <b>¥24</b></div>
+                <div class="acts"><button class="sbtn">取消</button><button class="sbtn primary">去支付</button></div>
+              </div>
+            </div>
+            <div class="ocard" data-screen-go="detail" style="cursor:pointer">
+              <div class="oh">
+                <span class="sn">订单号 20261028201244</span>
+                <span class="ostatus going">待取餐</span>
+              </div>
+              <div class="oitems">
+                <div class="ph" style="background:#FFFBEB;color:#D97706"><svg class="ic"><use href="#i-noodle"/></svg></div>
+                <div class="txt"><b>面面俱到 · 二食堂</b><span>菌菇鸡丝面 ×2</span></div>
+              </div>
+              <div class="of">
+                <div class="sum">合计 <b>¥32</b></div>
+                <div class="acts"><button class="sbtn">联系商家</button><button class="sbtn primary">查看取餐码</button></div>
+              </div>
+            </div>
+            <div class="ocard">
+              <div class="oh">
+                <span class="sn">订单号 20261027090310</span>
+                <span class="ostatus done">已完成</span>
+              </div>
+              <div class="oitems">
+                <div class="ph" style="background:#ECFDF5;color:#059669"><svg class="ic"><use href="#i-salad"/></svg></div>
+                <div class="txt"><b>轻卡轻食 · 西门店</b><span>鸡胸沙拉 ×1</span></div>
+              </div>
+              <div class="of">
+                <div class="sum">合计 <b>¥22</b></div>
+                <div class="acts"><button class="sbtn">再来一单</button><button class="sbtn">评价</button></div>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+          </div>
+
+          <!-- 屏 2：订单详情 -->
+          <div class="screen" data-screen="detail">
+            <div class="navbar">
+              <div class="back" data-screen-go="list"><svg class="ic"><use href="#i-left"/></svg></div>
+              <div class="ttl">订单详情</div>
+              <div class="rt"></div>
+            </div>
+            <div style="background:#fff;padding:20px 16px;text-align:center">
+              <div style="font-size:16px;font-weight:600;color:#DC2626;margin-bottom:4px">等待付款</div>
+              <div style="font-size:11.5px;color:#94A3B8" data-fp="8">剩余 14:32 自动取消</div>
+            </div>
+            <div class="amt-row" style="margin-top:9px">
+              <div style="font-weight:600;color:#0F172A;margin-bottom:10px" data-fp="9">商品清单</div>
+              <div class="l"><span>招牌卤肉饭 ×1</span><span>¥18</span></div>
+              <div class="l"><span>时蔬例汤 ×1</span><span>¥6</span></div>
+              <div class="l"><span>打包费</span><span>¥1.5</span></div>
+              <div class="l"><span>优惠</span><span style="color:#DC2626">−¥5</span></div>
+              <div class="l"><span>实付</span><b>¥20.5</b></div>
+            </div>
+            <div class="amt-row">
+              <div class="l"><span>取餐方式</span><span>到店自取</span></div>
+              <div class="l"><span>下单时间</span><span>2026-10-29 10:35</span></div>
+              <div class="l"><span>订单号</span><span>20261029103512</span></div>
+            </div>
+            <div class="cart-bar">
+              <div class="cnt">实付 <b>¥20.5</b></div>
+              <button class="go" data-fp="10">立即支付</button>
+            </div>
+          </div>
+
+        </div>
+        <div class="tabbar">
+          <div class="tab" data-menu-btn="home"><svg class="ic"><use href="#i-home"/></svg>首页</div>
+          <div class="tab active" data-menu-btn="orders"><svg class="ic"><use href="#i-order"/></svg>订单</div>
+          <div class="tab" data-menu-btn="cart"><svg class="ic"><use href="#i-cart"/></svg>购物车<span class="badge">2</span></div>
+          <div class="tab" data-menu-btn="me"><svg class="ic"><use href="#i-user"/></svg>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== tab 3：购物车 ========== -->
+    <div class="page" data-menu="cart">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right"><svg class="ic" style="width:17px;height:11px"><use href="#i-signal"/></svg><svg class="ic" style="width:25px;height:12px"><use href="#i-battery"/></svg></span>
+        </div>
+        <div class="phone-body">
+          <div class="screen active" data-screen="list">
+            <div class="navbar"><div class="ttl" style="padding-left:4px">购物车</div><div class="rt" data-fp="11">管理</div></div>
+            <div class="citem">
+              <div class="ph" style="background:#FEF3C7;color:#B45309"><svg class="ic"><use href="#i-burger"/></svg></div>
+              <div class="info"><h4>招牌卤肉饭</h4><div class="sp">青禾小馆 · 一楼档口</div></div>
+              <div class="rt">
+                <div class="price" style="margin-bottom:7px"><em>¥</em><b>18</b></div>
+                <div class="stepper" data-fp="12"><span class="m"><svg class="ic"><use href="#i-minus"/></svg></span><span class="n">1</span><span class="m fill"><svg class="ic"><use href="#i-plus"/></svg></span></div>
+              </div>
+            </div>
+            <div class="citem">
+              <div class="ph" style="background:#ECFDF5;color:#059669"><svg class="ic"><use href="#i-salad"/></svg></div>
+              <div class="info"><h4>时蔬例汤</h4><div class="sp">青禾小馆 · 一楼档口</div></div>
+              <div class="rt">
+                <div class="price" style="margin-bottom:7px"><em>¥</em><b>6</b></div>
+                <div class="stepper"><span class="m"><svg class="ic"><use href="#i-minus"/></svg></span><span class="n">1</span><span class="m fill"><svg class="ic"><use href="#i-plus"/></svg></span></div>
+              </div>
+            </div>
+            <div class="amt-row" style="margin-top:10px">
+              <div class="l"><span>商品小计</span><span>¥24</span></div>
+              <div class="l"><span>打包费</span><span>¥1.5</span></div>
+              <div class="l"><span>补贴优惠</span><span style="color:#DC2626">−¥5</span></div>
+            </div>
+            <div class="cart-bar">
+              <div class="cnt">合计 <b>¥20.5</b></div>
+              <button class="go" data-fp="13">去结算</button>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab" data-menu-btn="home"><svg class="ic"><use href="#i-home"/></svg>首页</div>
+          <div class="tab" data-menu-btn="orders"><svg class="ic"><use href="#i-order"/></svg>订单</div>
+          <div class="tab active" data-menu-btn="cart"><svg class="ic"><use href="#i-cart"/></svg>购物车<span class="badge">2</span></div>
+          <div class="tab" data-menu-btn="me"><svg class="ic"><use href="#i-user"/></svg>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== tab 4：我的 ========== -->
+    <div class="page" data-menu="me">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right"><svg class="ic" style="width:17px;height:11px"><use href="#i-signal"/></svg><svg class="ic" style="width:25px;height:12px"><use href="#i-battery"/></svg></span>
+        </div>
+        <div class="phone-body">
+          <div class="screen active" data-screen="list">
+            <div class="me-head" data-fp="14" data-fp-side="in">
+              <div class="u">
+                <div class="av">李</div>
+                <div><b>李明</b><span>计算机学院 · 2023 级</span></div>
+              </div>
+            </div>
+            <div class="me-card" data-fp="15">
+              <div class="it"><b>2</b><span>待付款</span></div>
+              <div class="it"><b>1</b><span>待取餐</span></div>
+              <div class="it"><b>0</b><span>待评价</span></div>
+              <div class="it"><b>18</b><span>全部订单</span></div>
+            </div>
+            <div class="me-list" data-fp="16">
+              <div class="me-row"><svg class="ic mi"><use href="#i-pin"/></svg>收货地址<svg class="ic ar"><use href="#i-right"/></svg></div>
+              <div class="me-row"><svg class="ic mi"><use href="#i-ticket"/></svg>优惠券<svg class="ic ar"><use href="#i-right"/></svg></div>
+              <div class="me-row"><svg class="ic mi"><use href="#i-invoice"/></svg>发票管理<svg class="ic ar"><use href="#i-right"/></svg></div>
+            </div>
+            <div class="me-list" data-fp="17">
+              <div class="me-row"><svg class="ic mi"><use href="#i-service"/></svg>联系客服<svg class="ic ar"><use href="#i-right"/></svg></div>
+              <div class="me-row"><svg class="ic mi"><use href="#i-settings"/></svg>设置<svg class="ic ar"><use href="#i-right"/></svg></div>
+            </div>
+            <div style="height:14px"></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab" data-menu-btn="home"><svg class="ic"><use href="#i-home"/></svg>首页</div>
+          <div class="tab" data-menu-btn="orders"><svg class="ic"><use href="#i-order"/></svg>订单</div>
+          <div class="tab" data-menu-btn="cart"><svg class="ic"><use href="#i-cart"/></svg>购物车<span class="badge">2</span></div>
+          <div class="tab active" data-menu-btn="me"><svg class="ic"><use href="#i-user"/></svg>我的</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <aside id="prd">
+    <div id="local-tip">
+      <span id="local-tip-txt"></span>
+      <button id="btn-discard-local">丢弃本机修改</button>
+    </div>
+    <div id="prd-body"></div>
+  </aside>
+</div>
+
+<button id="toggle-prd">隐藏需求说明 ›</button>
+
+<div id="edit-bar">
+  <b>编辑态</b>
+  <span>黄底格子可改，🔒 锁死项与左侧原型强绑定。改完记得点「导出 HTML」，否则改动只存在本机浏览器里。</span>
+  <span class="sp"></span>
+  <button id="btn-export-2">导出 HTML</button>
+  <button id="btn-done">完成</button>
+</div>
+
+<script id="prd-data" type="application/json">
+{
+  "system": "__SYSTEM__",
+  "platform": "mobile",
+  "theme": {
+    "primary": "#2563EB"
+  },
+  "menus": [
+    {
+      "id": "home",
+      "name": "首页",
+      "summary": "移动端主入口，承载搜索、活动运营位与附近商家推荐，目标是让用户 3 步内进入点餐。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "搜索框（只读占位，点击跳搜索页）+ 运营 banner（通栏，高 112，圆角 10）"
+            },
+            {
+              "k": "页面主体",
+              "v": "分类快捷入口一行 4 个（图标 42×42 圆角 13 + 文字）；「附近商家」列表，每张卡：logo 62×62、店名、评分/月售/距离、优惠标签"
+            },
+            {
+              "k": "空状态",
+              "v": "附近无商家时展示「附近暂无营业商家」+ 定位开关引导，保留搜索与分类区"
+            },
+            {
+              "k": "底部",
+              "v": "四栏 tabbar（首页/订单/购物车/我的），购物车带数量角标"
+            },
+            {
+              "k": "刷新机制",
+              "v": "下拉刷新整页；商家列表上滑加载更多，每页 10 条"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "定位权限被拒绝",
+              "behavior": "不再弹二次授权，自动切换至默认校区并在顶部显示可点击的校区名",
+              "message": "「未获取定位权限，已为你切换至默认校区」"
+            },
+            {
+              "scene": "网络断开",
+              "behavior": "顶部出现常驻离线提示条，展示上次缓存列表，所有下单入口置灰",
+              "message": "「网络已断开，请检查网络设置」"
+            },
+            {
+              "scene": "商品图加载失败",
+              "behavior": "图位降级为灰底 + 店铺名首字，尺寸保持不变，不撑破卡片",
+              "message": "无（静默降级）"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "校区 / 收货地址切换浮层",
+              "trigger": "点击首页顶部「当前校区」文字（默认展示定位到的校区名）",
+              "content": "搜索框 + 校区列表（当前校区置顶并带 ✓，其余按距离排序，展示「距你 1.2km」）+ 底部通栏「使用当前定位」按钮",
+              "close": "点遮罩空白处、点右上角 ×、选中任一项后自动关闭并刷新商家列表；「使用当前定位」触发重新定位不关闭",
+              "form": "底部抽屉（Bottom Sheet），高 55% 屏高，顶部圆角 16，列表项高 48、左右内边距 16",
+              "anim": "从底部上滑 240ms（cubic-bezier .32,.72,0,1）；遮罩淡入 200ms；关闭下滑 180ms"
+            },
+            {
+              "panel": "搜索历史浮层",
+              "trigger": "点击首页搜索框（只读占位态）",
+              "content": "「最近搜索」最多 10 条（单条可删）+ 右侧「清空历史」+ 下方「热门搜索」标签云；无历史时只展示热门标签",
+              "close": "点「取消」、按 Android 物理返回键、点搜索框下方空白区域；点击某条历史直接进入搜索结果页",
+              "form": "页面内下拉层，覆盖首屏内容区，顶部固定保留搜索输入框，不使用模态遮罩",
+              "anim": "内容区高度展开 200ms（ease-out）+ 淡入 120ms；关闭反向 150ms"
+            }
+          ]
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "tabBar[0] · /pages/home/index"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "已登录的在校学生、教职工（仅校内 IP 可下单）"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "把「找店 → 看菜 → 下单」压缩到三步，减少课间十分钟内的决策成本。"
+                }
+              ]
+            },
+            {
+              "type": "para",
+              "text": "页面自上而下为：搜索框、运营 banner、分类快捷入口、附近商家列表。整页单列滚动，不出现横向轮播以外的横向滑动区域。"
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 1,
+              "name": "搜索入口",
+              "desc": "点击跳转搜索页，支持按店铺名与菜品名检索。",
+              "rules": [
+                "搜索框为只读占位，点击跳转而非原地输入，避免键盘遮挡首屏内容。",
+                "搜索页保留最近 10 条搜索历史，支持一键清空。"
+              ]
+            },
+            {
+              "fp": 2,
+              "name": "分类快捷入口",
+              "desc": "四个固定分类，点击后带分类参数跳转店铺列表页。",
+              "fields": {
+                "table": "list",
+                "caption": "分类项",
+                "rows": [
+                  {
+                    "el": "分类图标",
+                    "type": "图标",
+                    "logic": "40×40 圆角方块，底色按分类配置",
+                    "note": "最多 4 个，超出折叠为「更多」"
+                  },
+                  {
+                    "el": "分类名称",
+                    "type": "文本",
+                    "logic": "4 字以内单行展示",
+                    "note": "超出省略号"
+                  }
+                ]
+              },
+              "rules": [
+                "分类数量与顺序由后台配置驱动，前端不写死。",
+                "点击后跳转路径带 category_id，用于列表页首屏筛选。"
+              ]
+            },
+            {
+              "fp": 3,
+              "name": "附近商家列表",
+              "desc": "按距离升序展示已营业商家，点击进入店铺详情。",
+              "fields": {
+                "table": "list",
+                "caption": "商家卡片元素",
+                "rows": [
+                  {
+                    "el": "店铺 logo",
+                    "type": "图片",
+                    "logic": "62×62 圆角 9px，加载失败回退首字",
+                    "note": ""
+                  },
+                  {
+                    "el": "店铺名称",
+                    "type": "文本",
+                    "logic": "单行，超出省略",
+                    "note": ""
+                  },
+                  {
+                    "el": "评分 / 月售 / 距离",
+                    "type": "文本组",
+                    "logic": "评分取一位小数，距离 <1km 用米",
+                    "note": ""
+                  },
+                  {
+                    "el": "优惠标签",
+                    "type": "标签组",
+                    "logic": "最多展示 2 个，超出不展示",
+                    "note": "「满减」优先"
+                  }
+                ]
+              },
+              "rules": [
+                "仅展示营业中商家；休息中商家置底并整体置灰，不可点击。",
+                "距离计算基于用户当前定位，拒绝授权时按默认校区坐标计算并提示「未开启定位」。",
+                "列表上滑加载更多，每页 10 条，无更多时展示「没有更多了」。"
+              ],
+              "precondition": "已获取定位权限（或用户已手动选择校区）；当前时间在该校区营业时段内；账号已登录（未登录可浏览但不可下单）",
+              "flow": [
+                {
+                  "t": "进入首页，读取定位或已选校区",
+                  "type": "start"
+                },
+                {
+                  "t": "拉取附近商家列表第 1 页（10 条，按距离升序）",
+                  "type": "step"
+                },
+                {
+                  "t": "渲染商家卡片：logo、店名、评分/月售/距离、优惠标签",
+                  "type": "step"
+                },
+                {
+                  "t": "商家是否在营业时段内？",
+                  "type": "branch",
+                  "note": "否 → 卡片置灰并标「休息中」，仍展示不可点击"
+                },
+                {
+                  "t": "上拉到底部，加载下一页并追加",
+                  "type": "step"
+                },
+                {
+                  "t": "无更多数据，底部展示「没有更多了」",
+                  "type": "end"
+                }
+              ],
+              "exceptions": [
+                {
+                  "scene": "定位成功但附近无可配送商家",
+                  "behavior": "保留搜索框与分类区，列表区展示空状态插画与刷新按钮",
+                  "message": "「附近暂无可配送商家」"
+                },
+                {
+                  "scene": "商家列表加载失败",
+                  "behavior": "仅列表区替换为重试按钮，banner 与分类区不受影响",
+                  "message": "「加载失败，点击重试」"
+                },
+                {
+                  "scene": "商家已打烊",
+                  "behavior": "卡片整体降透明度至 60%，店铺名后追加「休息中」标签，点击不进入详情",
+                  "message": "「该商家今日已打烊」"
+                }
+              ]
+            },
+            {
+              "fp": 4,
+              "name": "菜品加减",
+              "desc": "店铺详情页内的商品行，右侧步进器控制数量。",
+              "rules": [
+                "数量为 0 时减号置灰不可点；上限为 99。",
+                "每次加减即时更新底部购物车条金额，不请求接口。",
+                "售罄商品整行置灰，步进器替换为「已售罄」文案。"
+              ],
+              "states": [
+                "可售",
+                "售罄",
+                "下架"
+              ]
+            },
+            {
+              "fp": 5,
+              "name": "底部购物车条",
+              "desc": "固定在店铺详情页底部，展示已选件数与合计金额。",
+              "rules": [
+                "未选任何商品时，条内展示「未选购商品」，结算按钮置灰。",
+                "合计金额 = Σ(单价 × 数量)，不含打包费与优惠，与结算页口径区分。",
+                "点击「去结算」跳转确认订单页，携带当前店铺与商品快照。"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "订单",
+      "summary": "用户的全部订单入口，按状态分栏，支持从列表直接进入详情完成支付与取餐。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "标题「我的订单」+ 四栏状态筛选（全部/待付款/待取餐/已完成），吸顶，选中项主色下划线，切换不重置滚动位置"
+            },
+            {
+              "k": "页面主体",
+              "v": "订单卡片列表。每张卡：订单号（可复制）、状态标签（待付款红/待取餐蓝/已完成灰）、商品摘要（最多 2 个品名 + 等 N 件）、合计金额、操作按钮组（最多 2 个，主操作靠右）"
+            },
+            {
+              "k": "空状态",
+              "v": "列表为空时展示插画 + 「暂无相关订单」+「去点餐」按钮，不隐藏顶部状态栏"
+            },
+            {
+              "k": "底部",
+              "v": "四栏 tabbar，购物车带数量角标；有「待取餐」订单时角标同步显示"
+            },
+            {
+              "k": "刷新机制",
+              "v": "下拉刷新；上拉加载更多，每页 10 条，无更多时展示「没有更多了」；「待取餐」栏每 30 秒静默刷新一次状态"
+            }
+          ]
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "取消订单确认弹窗",
+              "trigger": "在「待付款」订单卡片上点「取消」",
+              "content": "标题「确认取消该订单？」+ 说明「取消后优惠券将退回账户，30 分钟内可重新下单」+ 底部「再想想」「确认取消」两个按钮",
+              "close": "点「再想想」、点遮罩空白处、按 Android 物理返回键；点「确认取消」后调接口成功再关闭",
+              "form": "居中模态弹窗，宽 280，圆角 12，遮罩 45% 黑；移动端不使用侧滑抽屉",
+              "anim": "淡入 180ms + 缩放 0.94→1（ease-out）；关闭反向 140ms；遮罩同步淡入淡出"
+            },
+            {
+              "panel": "取餐码浮层",
+              "trigger": "「待取餐」订单卡片点「查看取餐码」",
+              "content": "取餐码大字（4 位数字，48px 等宽字体、居中）+ 店铺名 + 取餐窗口 + 剩余等待时间 + 底部「我已取餐」按钮",
+              "close": "点右上角 ×、点「我已取餐」、向下滑动手势关闭",
+              "form": "底部抽屉（Bottom Sheet），高度 62% 屏高，顶部圆角 16，可下滑收起",
+              "anim": "从底部上滑 260ms（cubic-bezier .32,.72,0,1）；关闭下滑 200ms；遮罩淡入 200ms"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "网络断开",
+              "behavior": "顶部出现离线提示条，列表展示本地缓存数据，所有操作按钮置灰",
+              "message": "「网络已断开，请检查网络后重试」"
+            },
+            {
+              "scene": "商品售罄（下单时）",
+              "behavior": "拦截下单，跳回购物车并定位到售罄商品行，整行标红",
+              "message": "「招牌卤肉饭」已售罄，请重新选择"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "tabBar[1] · /pages/order/list"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "全部已登录用户"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "让用户在食堂门口两秒内找到取餐码，或在待付款状态下快速完成支付。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 6,
+              "name": "状态分栏",
+              "desc": "四栏固定：全部、待付款、待取餐、已完成，点击切换列表数据。",
+              "rules": [
+                "分栏不做左右滑动，避免与订单卡片内的横向操作冲突。",
+                "切栏不重置滚动位置，各栏独立记忆。",
+                "「待取餐」栏存在待取餐订单时，tabbar 购物车角标同步显示数量。"
+              ]
+            },
+            {
+              "fp": 7,
+              "name": "订单卡片",
+              "desc": "展示订单号、状态、商品摘要、金额与快捷操作。",
+              "precondition": "用户已登录且身份为在校学生/教职工；订单列表接口已返回首屏数据（含分页游标）",
+              "flow": [
+                {
+                  "t": "进入「订单」tab，默认停在「全部」栏",
+                  "type": "start"
+                },
+                {
+                  "t": "按创建时间倒序拉取第 1 页（10 条）",
+                  "type": "step"
+                },
+                {
+                  "t": "渲染订单卡片，状态标签按状态映射颜色",
+                  "type": "step"
+                },
+                {
+                  "t": "点击卡片主体？",
+                  "type": "branch",
+                  "note": "是 → 进入订单详情；否 → 停留列表"
+                },
+                {
+                  "t": "点击卡片内操作按钮",
+                  "type": "branch",
+                  "note": "阻止事件冒泡，不触发跳转，按按钮语义执行"
+                },
+                {
+                  "t": "上拉到底部，加载下一页并追加",
+                  "type": "step"
+                },
+                {
+                  "t": "无更多数据，底部展示「没有更多了」",
+                  "type": "end"
+                }
+              ],
+              "fields": {
+                "table": "list",
+                "caption": "卡片元素",
+                "rows": [
+                  {
+                    "el": "订单号",
+                    "type": "文本",
+                    "logic": "单行左对齐，灰色小字",
+                    "note": "点击可复制"
+                  },
+                  {
+                    "el": "状态",
+                    "type": "标签",
+                    "logic": "颜色映射：待付款红 / 待取餐蓝 / 已完成灰",
+                    "note": ""
+                  },
+                  {
+                    "el": "商品摘要",
+                    "type": "文本",
+                    "logic": "最多 2 个品名 + 「等 N 件」",
+                    "note": ""
+                  },
+                  {
+                    "el": "操作按钮",
+                    "type": "按钮组",
+                    "logic": "按状态动态渲染，最多 2 个",
+                    "note": "主操作靠右"
+                  }
+                ]
+              },
+              "rules": [
+                "卡片点击进入详情，按钮点击阻止冒泡，不触发跳转。",
+                "「待付款」状态当剩余支付时间 <5 分钟时，状态文案变红并每 30 秒刷新一次。",
+                "列表下拉刷新，上拉加载更多，每页 10 条。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "取餐码加载失败",
+                  "behavior": "浮层不关闭，内容区替换为重试按钮，保留标题与关闭入口",
+                  "message": "「取餐码加载失败，点击重试」"
+                }
+              ]
+            },
+            {
+              "fp": 8,
+              "name": "支付倒计时",
+              "desc": "待付款订单详情页顶部显示剩余支付时间。",
+              "rules": [
+                "倒计时归零后页面自动刷新为「订单已取消」，同时禁用支付按钮。",
+                "倒计时以服务端返回的过期时间戳为准，不依赖客户端启动时间。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "支付超时（下单后 15 分钟未支付）",
+                  "behavior": "订单自动关闭，状态改为「已取消」，支付按钮置灰不可点，卡片移入「已完成」栏",
+                  "message": "「订单已超时关闭，请重新下单」"
+                }
+              ]
+            },
+            {
+              "fp": 9,
+              "name": "商品清单与金额",
+              "desc": "订单明细区，逐行列出商品、打包费、优惠与实付。",
+              "fields": {
+                "table": "detail",
+                "caption": "明细行",
+                "rows": [
+                  {
+                    "group": "金额明细",
+                    "name": "商品小计",
+                    "logic": "按单价 × 数量累加",
+                    "note": ""
+                  },
+                  {
+                    "group": "金额明细",
+                    "name": "打包费",
+                    "logic": "按商家配置，每单固定或按件计",
+                    "note": "不可为负"
+                  },
+                  {
+                    "group": "金额明细",
+                    "name": "优惠",
+                    "logic": "负数红字展示",
+                    "note": "含平台券与商家券"
+                  },
+                  {
+                    "group": "金额明细",
+                    "name": "实付",
+                    "logic": "加粗放大，红字",
+                    "note": "与支付金额严格一致"
+                  }
+                ]
+              },
+              "rules": [
+                "金额一律保留两位小数，展示时四舍五入。",
+                "实付金额与支付渠道回传金额不一致时，以支付渠道为准并在后台告警。"
+              ]
+            },
+            {
+              "fp": 10,
+              "name": "立即支付",
+              "desc": "调起微信支付，成功后跳转「待取餐」并展示取餐码。",
+              "precondition": "订单状态为「待付款」且未超过 15 分钟支付时限；用户已授权微信支付且余额/绑卡可用",
+              "flow": [
+                {
+                  "t": "点击「立即支付」",
+                  "type": "start"
+                },
+                {
+                  "t": "按钮置灰并显示 loading，防止重复调起",
+                  "type": "step"
+                },
+                {
+                  "t": "服务端创建预支付单，返回支付参数",
+                  "type": "step"
+                },
+                {
+                  "t": "调起微信支付收银台",
+                  "type": "step"
+                },
+                {
+                  "t": "支付结果？",
+                  "type": "branch",
+                  "note": "成功 → 跳取餐码页；取消 → 停留原页并提示；失败 → 展示原因与重试"
+                },
+                {
+                  "t": "以服务端回调为准更新订单状态",
+                  "type": "end"
+                }
+              ],
+              "rules": [
+                "支付中按钮置灰，防重复调起。",
+                "支付成功 → 跳转取餐码页；支付取消 → 停留原页并提示「已取消支付」。",
+                "支付结果以服务端回调为准，前端仅做展示，不做状态判定。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "支付成功但订单状态未同步",
+                  "behavior": "停留在当前页并轮询，最多 5 次（间隔 2 秒）；仍未同步则展示「刷新订单」按钮，不自动跳转",
+                  "message": "「支付结果确认中，请稍后刷新」"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cart",
+      "name": "购物车",
+      "summary": "跨店铺购物车统一管理，支持数量调整、删除与结算前费用预估。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "标题「购物车」+ 右侧「管理」文字按钮，切换后进入多选删除模式"
+            },
+            {
+              "k": "页面主体",
+              "v": "按店铺分组的商品行，每行：商品图 56×56、名称、店铺名、金额、数量步进器；分组之间留 10 间距"
+            },
+            {
+              "k": "空状态",
+              "v": "购物车为空时展示插画 + 「购物车还是空的」+「去逛逛」按钮，隐藏结算条"
+            },
+            {
+              "k": "底部",
+              "v": "固定在 tabbar 上方的结算条：合计金额（红字）+「去结算」主按钮；管理模式下列表底部变为「删除」条"
+            },
+            {
+              "k": "刷新机制",
+              "v": "进入页面即拉取最新数据；数量变更后 100ms 防抖同步服务端，不整页刷新"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "购物车为空",
+              "behavior": "隐藏底部结算条，主体展示空状态插画与「去逛逛」按钮",
+              "message": "「购物车还是空的」"
+            },
+            {
+              "scene": "结算时网络断开",
+              "behavior": "拦截结算并保留购物车数据，顶部出现离线提示条，恢复网络后自动重试一次",
+              "message": "「网络已断开，结算未提交」"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "清空 / 删除商品确认弹窗",
+              "trigger": "点击右上角「管理」进入管理模式，勾选商品后点底部「删除」",
+              "content": "标题「确认删除所选商品？」+ 说明「已选 3 件商品，删除后不可恢复」+ 底部「取消」「删除」两个按钮（删除为红色主操作，靠右）",
+              "close": "点「取消」、点遮罩空白处、按 Android 物理返回键；删除成功后自动关闭并退出管理模式",
+              "form": "居中模态弹窗，宽 280，圆角 12，遮罩 45% 黑；按钮区左右等分",
+              "anim": "淡入 180ms + 缩放 0.94→1（ease-out）；关闭反向 140ms；遮罩同步淡入淡出"
+            },
+            {
+              "panel": "商品规格切换浮层",
+              "trigger": "点击购物车商品行的商品图或商品名",
+              "content": "商品大图（16:9）+ 当前规格与价格 + 规格选项组（单选）+ 加料选项组（多选，带加价）+ 数量步进器 + 底部「确认修改」按钮",
+              "close": "点右上角 ×、向下滑动手势、点「确认修改」保存后关闭；未改动时点「确认修改」直接关闭",
+              "form": "底部抽屉，高 70% 屏高，顶部圆角 16，内容区可滚动，按钮区固定吸底",
+              "anim": "从底部上滑 260ms（cubic-bezier .32,.72,0,1）；关闭下滑 200ms"
+            }
+          ]
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "tabBar[2] · /pages/cart/index"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "全部已登录用户"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "把多个店铺的待下单商品集中管理，避免在店铺间来回切换丢失已选内容。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 11,
+              "name": "管理模式",
+              "desc": "切换后每行出现选择框，底部变为「删除」操作。",
+              "rules": [
+                "管理模式下列表项点击不再跳转店铺，仅切换选中态。",
+                "删除前二次确认，提示「将从购物车移除 N 件商品」。"
+              ]
+            },
+            {
+              "fp": 12,
+              "name": "购物车商品行",
+              "desc": "按店铺分组展示商品，支持数量增减。",
+              "fields": {
+                "table": "form-edit",
+                "caption": "商品行元素",
+                "rows": [
+                  {
+                    "el": "商品图",
+                    "type": "图片",
+                    "required": "否",
+                    "rule": "56×56 圆角 8px",
+                    "default": "占位图",
+                    "note": ""
+                  },
+                  {
+                    "el": "商品名",
+                    "type": "文本",
+                    "required": "否",
+                    "rule": "单行省略",
+                    "default": "—",
+                    "note": ""
+                  },
+                  {
+                    "el": "数量",
+                    "type": "步进器",
+                    "required": "是",
+                    "rule": "1-99 整数",
+                    "default": "1",
+                    "note": "减到 1 时再减触发删除确认"
+                  }
+                ]
+              },
+              "rules": [
+                "数量变更即时重算底部合计，100ms 防抖后同步服务端。",
+                "商品下架或售罄时整行置灰并标注原因，不计入合计。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "商品已下架",
+                  "behavior": "该行置灰并打「已下架」标签，不参与合计，结算前强制拦截并定位到该行",
+                  "message": "「招牌卤肉饭」已下架，请移除后再结算"
+                },
+                {
+                  "scene": "库存不足",
+                  "behavior": "数量自动回退到可售上限，步进器「+」置灰不可点",
+                  "message": "「库存仅剩 2 份，已为你调整数量」"
+                },
+                {
+                  "scene": "加入购物车后价格变动",
+                  "behavior": "行内价格后追加「价格有变动」小标签，合计按最新价重算",
+                  "message": "「部分商品价格已更新，请确认后结算」"
+                },
+                {
+                  "scene": "数量同步服务端失败",
+                  "behavior": "数量回滚到修改前的值，不打断当前浏览",
+                  "message": "「修改失败，请稍后重试」"
+                }
+              ]
+            },
+            {
+              "fp": 13,
+              "name": "合计与结算",
+              "desc": "底部固定条展示合计金额与「去结算」按钮。",
+              "rules": [
+                "合计仅算商品小计，打包费与优惠在结算页展示。",
+                "购物车为空时展示空状态插画与「去逛逛」按钮。"
+              ],
+              "precondition": "购物车内至少有 1 件有效商品；用户已登录；所选店铺处于营业时段内",
+              "flow": [
+                {
+                  "t": "勾选商品（默认全选），实时重算合计",
+                  "type": "start"
+                },
+                {
+                  "t": "合计 = 商品金额 − 优惠金额 + 配送费，四舍五入到分",
+                  "type": "step"
+                },
+                {
+                  "t": "点击「去结算」",
+                  "type": "step"
+                },
+                {
+                  "t": "校验库存、下架状态与店铺营业状态",
+                  "type": "branch",
+                  "note": "不通过 → 拦截结算，定位并标红问题行"
+                },
+                {
+                  "t": "生成订单草稿，跳转「确认订单」页",
+                  "type": "end"
+                }
+              ],
+              "exceptions": [
+                {
+                  "scene": "店铺已打烊（点结算时）",
+                  "behavior": "拦截结算，该店铺分组整体标灰，结算按钮置灰不可点",
+                  "message": "「青禾小馆已打烊，暂不可下单」"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "me",
+      "name": "我的",
+      "summary": "个人中心，聚合订单状态快捷入口、地址与权益，以及客服与设置。",
+      "sections": [
+        {
+          "type": "layout",
+          "title": "布局说明",
+          "rows": [
+            {
+              "k": "页面顶部",
+              "v": "渐变头部（浅蓝到深蓝），左侧头像 54×54 圆形 + 昵称 + 学院年级，下方数据卡上浮 32px 叠压"
+            },
+            {
+              "k": "页面主体",
+              "v": "订单状态四宫格（待付款/待取餐/待评价/全部订单，带数量）+ 两组功能列表（地址/优惠券/发票、客服/设置），每行高 47，右侧箭头"
+            },
+            {
+              "k": "空状态",
+              "v": "未登录时头像区显示「点击登录」，订单数量全部置 0 并隐藏角标"
+            },
+            {
+              "k": "底部",
+              "v": "四栏 tabbar，本页为「我的」选中态"
+            },
+            {
+              "k": "刷新机制",
+              "v": "下拉刷新用户信息与订单数量；页面常驻不轮询"
+            }
+          ]
+        },
+        {
+          "type": "exceptions",
+          "title": "页面级异常",
+          "rows": [
+            {
+              "scene": "未登录",
+              "behavior": "头像区显示「点击登录」，订单数量全部置 0 并隐藏角标，点击任意功能行跳登录页",
+              "message": "「登录后可查看订单与优惠券」"
+            },
+            {
+              "scene": "发现新版本（强制更新）",
+              "behavior": "弹不可关闭的更新引导，仅保留「立即更新」一个按钮",
+              "message": "「发现新版本，请更新后继续使用」"
+            }
+          ],
+          "note": "影响整页的通用异常（断网、无权限、版本过低等）。功能点自身的异常写在该功能点卡片的「异常场景」里。"
+        },
+        {
+          "type": "interactions",
+          "title": "交互说明",
+          "items": [
+            {
+              "panel": "退出登录确认弹窗",
+              "trigger": "在「设置」列表行内点「退出登录」",
+              "content": "标题「确认退出登录？」+ 说明「退出后需重新登录才能查看订单与优惠券」+ 底部「取消」「退出」两个按钮",
+              "close": "点「取消」、点遮罩空白处、按 Android 物理返回键；点「退出」后清空本地会话并回到首页",
+              "form": "居中模态弹窗，宽 280，圆角 12，遮罩 45% 黑；「退出」为红色文字按钮",
+              "anim": "淡入 180ms + 缩放 0.94→1；关闭反向 140ms"
+            },
+            {
+              "panel": "优惠券中心",
+              "trigger": "点击「优惠券」列表行",
+              "content": "顶部三栏分栏（可用 / 已使用 / 已过期，带数量）+ 券卡片（面额、使用门槛、适用范围、有效期、即将过期红色角标）+ 卡片右下「去使用」按钮",
+              "close": "点左上角返回箭头、按 Android 物理返回键、从屏幕左缘右滑返回",
+              "form": "全屏二级页面从右侧推入，覆盖 tabbar；非弹窗、无遮罩",
+              "anim": "从右滑入 260ms（ease-out）；返回反向 220ms，带轻微视差（底层页面左移 30%）"
+            }
+          ]
+        },
+        {
+          "type": "overview",
+          "title": "页面概述",
+          "blocks": [
+            {
+              "type": "kv",
+              "rows": [
+                {
+                  "k": "页面路径",
+                  "v": "tabBar[3] · /pages/me/index"
+                },
+                {
+                  "k": "面向角色",
+                  "v": "全部已登录用户"
+                },
+                {
+                  "k": "解决问题",
+                  "v": "把高频的个人事务（订单状态、地址、优惠券）前置到首屏，低频设置下沉。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "功能说明",
+          "items": [
+            {
+              "fp": 14,
+              "name": "用户信息头部",
+              "desc": "展示头像、昵称与学院年级信息。",
+              "rules": [
+                "未登录时显示「点击登录」，点击跳转授权登录页。",
+                "昵称超 10 字省略，头像加载失败回退昵称首字。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "用户信息拉取失败",
+                  "behavior": "保留上次缓存的昵称与头像，头部右侧展示局部刷新入口，不阻塞页面",
+                  "message": "「信息加载失败，点击刷新」"
+                },
+                {
+                  "scene": "头像上传失败",
+                  "behavior": "头像恢复为上传前的原图，不进入加载态",
+                  "message": "「头像上传失败，请重试」"
+                }
+              ]
+            },
+            {
+              "fp": 15,
+              "name": "订单状态快捷入口",
+              "desc": "四个入口带数量角标，点击跳转订单列表对应分栏。",
+              "rules": [
+                "角标为 0 时不展示。",
+                "跳转需携带 tab 参数，直接定位到对应分栏。"
+              ],
+              "precondition": "用户已登录；订单数量接口已返回（未登录时全部按 0 处理并隐藏角标）",
+              "flow": [
+                {
+                  "t": "进入「我的」，并行拉取四个状态的订单数量",
+                  "type": "start"
+                },
+                {
+                  "t": "渲染四宫格与角标（数量 > 99 显示「99+」）",
+                  "type": "step"
+                },
+                {
+                  "t": "用户是否已登录？",
+                  "type": "branch",
+                  "note": "否 → 点击跳登录页，登录后返回本页"
+                },
+                {
+                  "t": "点击某个状态，切到「订单」tab 并预选该状态",
+                  "type": "step"
+                },
+                {
+                  "t": "从订单返回时保持上次停留的状态栏",
+                  "type": "end"
+                }
+              ],
+              "exceptions": [
+                {
+                  "scene": "订单数量拉取失败",
+                  "behavior": "四个数字位显示「-」，入口仍可点击，不阻塞其他模块",
+                  "message": "无（静默降级）"
+                }
+              ]
+            },
+            {
+              "fp": 16,
+              "name": "常用功能组",
+              "desc": "地址、优惠券、发票三个入口。",
+              "rules": [
+                "入口顺序固定，不随用户行为调整。",
+                "未开通发票功能的学校，该行整体隐藏而非置灰。"
+              ]
+            },
+            {
+              "fp": 17,
+              "name": "客服与设置",
+              "desc": "联系客服与系统设置。",
+              "rules": [
+                "联系客服优先唤起企业微信客服，失败时回退为拨号。",
+                "设置页包含清除缓存、隐私政策、关于我们。"
+              ],
+              "exceptions": [
+                {
+                  "scene": "在线客服不可用",
+                  "behavior": "「联系客服」行置灰，展开后展示备用电话，长按可复制",
+                  "message": "「在线客服暂不可用，请拨打 400-000-0000」"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function ts() {
+    var d = new Date(), p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function setByPath(obj, path, val) {
+    var parts = path.split('.'), cur = obj, i;
+    for (i = 0; i < parts.length - 1; i++) { cur = cur[parts[i]]; if (!cur) return; }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  var DATA = null, STORE_KEY = '', editing = false, currentMenu = '', saveTimer = null;
+
+  var LOCK = {
+    'list':      ['el', 'type'],
+    'form-add':  ['el', 'type', 'required', 'rule', 'default'],
+    'form-edit': ['el', 'type'],
+    'detail':    ['group', 'name']
+  };
+  var COLS = {
+    'list':      [['el', '元素', '23%'], ['type', '类型', '20%'], ['logic', '展示逻辑说明', '35%'], ['note', '备注', '22%']],
+    'form-add':  [['el', '元素', '18%'], ['type', '类型', '12%'], ['required', '必填', '7%'], ['rule', '校验规则', '30%'], ['default', '默认值', '12%'], ['note', '备注', '21%']],
+    'form-edit': [['el', '元素', '18%'], ['type', '类型', '12%'], ['required', '必填', '7%'], ['rule', '校验规则', '30%'], ['default', '默认值', '12%'], ['note', '备注', '21%']],
+    'detail':    [['group', '分组', '17%'], ['name', '字段名', '24%'], ['logic', '展示逻辑说明', '38%'], ['note', '备注', '21%']]
+  };
+
+  /* ---------------- 启动 ---------------- */
+  function boot() {
+    var raw = JSON.parse($('#prd-data').textContent);
+    DATA = raw;
+    STORE_KEY = 'pageprd:' + (raw.system || 'sys') + ':' + (raw.platform || 'mobile');
+
+    if (raw.theme && raw.theme.primary) {
+      document.documentElement.style.setProperty('--primary', raw.theme.primary);
+    }
+    $('#tb-sys').textContent = raw.system || '未命名系统';
+
+    try {
+      var cached = localStorage.getItem(STORE_KEY);
+      if (cached) {
+        var c = JSON.parse(cached);
+        if (c && c.__savedAt && c.__savedAt !== raw.__savedAt) {
+          if (window.confirm('检测到本机有未合并的说明修改（' + new Date(c.__savedAt).toLocaleString() + '）。\n\n点「确定」载入本机版本；点「取消」使用 HTML 文件内的版本，并丢弃本机修改。')) {
+            DATA = c;
+            showLocalTip(c.__savedAt);
+          } else {
+            localStorage.removeItem(STORE_KEY);
+          }
+        }
+      }
+    } catch (e) {}
+
+    var activePage = $('.page.active');
+    currentMenu = (activePage && activePage.dataset.menu) || (DATA.menus && DATA.menus[0] ? DATA.menus[0].id : '');
+
+    bindGlobal();
+    buildBubbles();
+    activateMenu(currentMenu, true);
+  }
+
+  function showLocalTip(savedAt) {
+    $('#local-tip-txt').textContent = '本机有 ' + new Date(savedAt).toLocaleString() + ' 的修改，尚未合并进 HTML 文件。';
+    $('#local-tip').classList.add('show');
+  }
+
+  function scheduleSave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      DATA.__savedAt = Date.now();
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch (e) {}
+    }, 320);
+  }
+
+  /* ---------------- 菜单 / 屏切换 ---------------- */
+  function findMenu(id) {
+    if (!DATA.menus) return null;
+    for (var i = 0; i < DATA.menus.length; i++) if (DATA.menus[i].id === id) return DATA.menus[i];
+    return null;
+  }
+
+  function activateMenu(id, silent) {
+    var menu = findMenu(id);
+    if (!menu) return;
+    currentMenu = id;
+
+    $$('#proto .page').forEach(function (p) {
+      var on = p.dataset.menu === id;
+      p.classList.toggle('active', on);
+      if (on) {
+        // 切回模块时回到第一个屏
+        var screens = $$('.screen', p);
+        screens.forEach(function (s, i) { s.classList.toggle('active', i === 0); });
+        var body = $('.phone-body', p);
+        if (body) body.scrollTop = 0;
+      }
+    });
+    $$('#proto [data-menu-btn]').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.menuBtn === id);
+    });
+
+    renderPrd(id);
+    if (!silent) {
+      $('#prd').scrollTop = 0;
+      buildBubbles();
+    } else {
+      requestAnimationFrame(placeBubbles);
+    }
+  }
+
+  function showScreen(menuId, screenName) {
+    var page = $('#proto .page[data-menu="' + menuId + '"]');
+    if (!page) return;
+    var hit = false;
+    $$('.screen', page).forEach(function (s) {
+      var on = s.dataset.screen === screenName;
+      s.classList.toggle('active', on);
+      if (on) hit = true;
+    });
+    if (!hit) return;
+    var body = $('.phone-body', page);
+    if (body) body.scrollTop = 0;
+    requestAnimationFrame(placeBubbles);
+  }
+
+  /* ---------------- 右侧渲染 ---------------- */
+  function renderPrd(menuId) {
+    var menu = findMenu(menuId);
+    var host = $('#prd-body');
+    if (!menu) { host.innerHTML = '<p class="para">未找到该菜单的需求说明。</p>'; return; }
+
+    var mi = DATA.menus.indexOf(menu);
+    var h = '<h1 class="prd-title"><span class="seq">' + (mi + 1) + '</span>' + esc(menu.name) + '</h1>';
+    if (menu.summary) h += '<p class="prd-sub">' + esc(menu.summary) + '</p>';
+
+    // 布局说明恒在最前，异常场景恒在最后，其余保持原序
+    var secs = (menu.sections || []).map(function (sec, idx) { return { sec: sec, idx: idx }; });
+    secs.sort(function (a, b) {
+      var rank = function (t) { return t === 'layout' ? 0 : (t === 'exceptions' ? 2 : 1); };
+      return rank(a.sec.type) - rank(b.sec.type);
+    });
+    secs.forEach(function (x) { h += renderSection(x.sec, mi, x.idx); });
+    h += '<button class="add-sec" data-add-sec="' + mi + '">+ 新增章节</button>';
+    host.innerHTML = h;
+    bindPrdEvents();
+  }
+
+  function renderSection(sec, mi, si) {
+    var h = '<section class="sec">';
+    var del = sec.type === 'custom' ? '<button class="del" data-del-sec="' + mi + '.' + si + '" title="删除该章节">删除</button>' : '';
+    h += '<h2 class="sec-h">' + esc(sec.title || '未命名章节') + del + '</h2>';
+    if (sec.note) h += '<div class="sec-note">' + esc(sec.note) + '</div>';
+
+    if (sec.type === 'features') {
+      (sec.items || []).forEach(function (item, ii) { h += renderFeature(item, mi, si, ii); });
+    } else if (sec.type === 'permission') {
+      h += renderPermission(sec, mi, si);
+    } else if (sec.type === 'layout') {
+      h += renderLayout(sec, mi, si);
+    } else if (sec.type === 'interactions') {
+      h += renderInteractions(sec, mi, si);
+    } else if (sec.type === 'exceptions') {
+      h += renderExceptions(sec, mi, si);
+    } else {
+      (sec.blocks || []).forEach(function (blk, bi) { h += renderBlock(blk, mi, si, bi); });
+    }
+    return h + '</section>';
+  }
+
+  function cell(tag, cls, attrs, text) {
+    return '<' + tag + (cls ? ' class="' + cls + '"' : '') + (attrs || '') + '>' + text + '</' + tag + '>';
+  }
+
+  function renderFeature(item, mi, si, ii) {
+    var base = 'menus.' + mi + '.sections.' + si + '.items.' + ii;
+    var fp = item.fp;
+
+    var h = '<div class="fp-card" data-fp-card="' + fp + '">';
+    h += '<div class="fp-card-head" data-toggle-card="1">';
+    h += '<span class="no">' + fp + '</span>';
+    h += '<span class="nm">' + esc(item.name) + '</span>';
+    h += '<span class="caret">▾</span></div>';
+    h += '<div class="fp-card-body">';
+
+    h += '<p class="fp-desc' + (editing ? ' ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.desc"' : '"') + '>' + esc(item.desc || '') + '</p>';
+
+    if (item.precondition) {
+      h += '<div class="pre"><b>前置条件</b><span' +
+        (editing ? ' contenteditable="true" spellcheck="false" data-path="' + base + '.precondition"' : '') +
+        '>' + esc(item.precondition) + '</span></div>';
+    }
+    if (item.flow && item.flow.length) {
+      h += renderFlow(item.flow, base + '.flow');
+    }
+    if (item.fields && item.fields.rows && item.fields.rows.length) {
+      h += renderFieldTable(item.fields, base + '.fields.rows');
+    }
+    if (item.rules && item.rules.length) {
+      h += '<div class="sub-h">业务规则</div><ul class="rules">';
+      item.rules.forEach(function (r, ri) {
+        var p = base + '.rules.' + ri;
+        if (editing) h += '<li contenteditable="true" spellcheck="false" data-path="' + p + '">' + esc(r) + '</li>';
+        else h += '<li>' + esc(r) + '</li>';
+      });
+      h += '</ul>';
+    }
+    if (item.exceptions && item.exceptions.length) {
+      h += '<div class="sub-h">异常场景</div>' + renderExList(item.exceptions, base + '.exceptions', true);
+    }
+    if (item.states && item.states.length) {
+      h += '<div class="sub-h">状态流转</div><ul class="flow">';
+      item.states.forEach(function (s, sidx) {
+        if (sidx > 0) h += '<li class="arrow">→</li>';
+        h += '<li>' + esc(s) + '</li>';
+      });
+      h += '</ul>';
+    }
+    return h + '</div></div>';
+  }
+
+  function renderFieldTable(fields, basePath) {
+    var kind = fields.table || 'list';
+    var cols = COLS[kind] || COLS['list'];
+    var lockSet = LOCK[kind] || [];
+
+    var h = '';
+    if (fields.caption) h += '<div class="sub-h">' + esc(fields.caption) + '</div>';
+    var tight = cols.length >= 6 ? ' tight' : '';
+    var minW = cols.length >= 6 ? 400 : 300;
+    h += '<div class="tbl-wrap"><table class="spec-tbl' + tight + '" style="min-width:' + minW + 'px"><thead><tr>';
+    cols.forEach(function (c) { h += '<th style="width:' + c[2] + '">' + esc(c[1]) + '</th>'; });
+    h += '</tr></thead><tbody>';
+
+    (fields.rows || []).forEach(function (row, ri) {
+      h += '<tr>';
+      cols.forEach(function (c) {
+        var key = c[0];
+        var val = row[key] == null ? '' : row[key];
+        var isLock = lockSet.indexOf(key) >= 0;
+        if (isLock) {
+          h += cell('td', 'lock', '', esc(val));
+        } else if (editing) {
+          h += cell('td', 'editable', ' contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.' + key + '"', esc(val));
+        } else {
+          h += cell('td', 'editable', '', esc(val));
+        }
+      });
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+
+  /* ---- 4.3a 布局说明 ---- */
+  function renderLayout(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.rows';
+    var h = '';
+    (sec.rows || []).forEach(function (r, ri) {
+      h += '<div class="lay-item"><div class="lay-k">' + esc(r.k || '') + '</div>';
+      if (editing) {
+        h += '<div class="lay-v ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.' + ri + '.v">' + esc(r.v || '') + '</div>';
+      } else {
+        h += '<div class="lay-v">' + esc(r.v || '') + '</div>';
+      }
+      h += '</div>';
+    });
+    return h;
+  }
+
+  /* ---- 4.3b 交互说明 ---- */
+  var IA_FIELDS = [['trigger', '触发方式'], ['content', '面板内容'], ['close', '关闭方式'], ['form', '展现形式'], ['anim', '动画效果']];
+
+  function renderInteractions(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.items';
+    var h = '';
+    (sec.items || []).forEach(function (it, ii) {
+      h += '<div class="ia-card"><div class="ia-h">';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + base + '.' + ii + '.panel">' + esc(it.panel || '未命名面板') + '</span>';
+      } else {
+        h += esc(it.panel || '未命名面板');
+      }
+      h += '</div><div class="ia-b">';
+      IA_FIELDS.forEach(function (f) {
+        var k = f[0];
+        if (!it[k]) return;
+        h += '<div class="ia-row"><b>' + f[1] + '</b>';
+        if (editing) {
+          h += '<span contenteditable="true" spellcheck="false" data-path="' + base + '.' + ii + '.' + k + '">' + esc(it[k]) + '</span>';
+        } else {
+          h += '<span>' + esc(it[k]) + '</span>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+    return h;
+  }
+
+  /* ---- 4.3c 异常场景 ---- */
+  function renderExList(rows, basePath, mini) {
+    var h = '';
+    (rows || []).forEach(function (r, ri) {
+      h += '<div class="ex-card' + (mini ? ' mini' : '') + '"><div class="ex-h">';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.scene">' + esc(r.scene || '') + '</span>';
+      } else {
+        h += esc(r.scene || '');
+      }
+      h += '</div><div class="ex-b">';
+      [['behavior', '系统表现'], ['message', '提示文案']].forEach(function (f) {
+        var k = f[0];
+        if (!r[k]) return;
+        h += '<div class="ex-row"><b>' + f[1] + '</b>';
+        if (editing) {
+          h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + ri + '.' + k + '">' + esc(r[k]) + '</span>';
+        } else {
+          h += '<span' + (k === 'message' ? ' class="msg"' : '') + '>' + esc(r[k]) + '</span>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+    return h;
+  }
+
+  function renderExceptions(sec, mi, si) {
+    return renderExList(sec.rows, 'menus.' + mi + '.sections.' + si + '.rows', false);
+  }
+
+  /* ---- 4.3d 业务流程（竖向时间线） ---- */
+  function renderFlow(flow, basePath) {
+    var h = '<div class="sub-h">业务流程</div><ol class="flow-v">';
+    flow.forEach(function (n, i) {
+      var type = n.type || 'step';
+      h += '<li class="' + type + '"><span class="nd">' + (i + 1) + '</span>';
+      if (editing) {
+        h += '<span contenteditable="true" spellcheck="false" data-path="' + basePath + '.' + i + '.t">' + esc(n.t || '') + '</span>';
+      } else {
+        h += '<span>' + esc(n.t || '') + '</span>';
+      }
+      if (n.note) h += '<div class="note">' + esc(n.note) + '</div>';
+      h += '</li>';
+    });
+    return h + '</ol>';
+  }
+
+  function renderPermission(sec, mi, si) {
+    var base = 'menus.' + mi + '.sections.' + si + '.rows';
+    var h = '<table class="spec-tbl"><thead><tr>' +
+      '<th style="width:26%">功能点</th><th style="width:31%">操作权限</th>' +
+      '<th style="width:24%">数据权限</th><th style="width:19%">备注</th></tr></thead><tbody>';
+    (sec.rows || []).forEach(function (row, ri) {
+      h += '<tr>' + cell('td', 'lock', '', esc(row.name || ''));
+      ['ops', 'data', 'note'].forEach(function (k) {
+        var p = base + '.' + ri + '.' + k;
+        if (editing) h += cell('td', 'editable', ' contenteditable="true" spellcheck="false" data-path="' + p + '"', esc(row[k] || ''));
+        else h += cell('td', 'editable', '', esc(row[k] || ''));
+      });
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  function renderBlock(blk, mi, si, bi) {
+    var base = 'menus.' + mi + '.sections.' + si + '.blocks.' + bi;
+    if (blk.type === 'para') {
+      if (editing) return '<p class="para ed-block" contenteditable="true" spellcheck="false" data-path="' + base + '.text">' + esc(blk.text) + '</p>';
+      return '<p class="para">' + esc(blk.text) + '</p>';
+    }
+    if (blk.type === 'kv') {
+      var h = '<dl class="kv">';
+      (blk.rows || []).forEach(function (r, ri) {
+        h += '<dt>' + esc(r.k) + '</dt>';
+        if (editing) h += '<dd contenteditable="true" spellcheck="false" data-path="' + base + '.rows.' + ri + '.v">' + esc(r.v) + '</dd>';
+        else h += '<dd>' + esc(r.v) + '</dd>';
+      });
+      return h + '</dl>';
+    }
+    if (blk.type === 'list') {
+      var l = '<ul class="bullets">';
+      (blk.items || []).forEach(function (it, ii) {
+        var p = base + '.items.' + ii;
+        if (editing) l += '<li contenteditable="true" spellcheck="false" data-path="' + p + '">' + esc(it) + '</li>';
+        else l += '<li>' + esc(it) + '</li>';
+      });
+      return l + '</ul>';
+    }
+    if (blk.type === 'table') {
+      var t = '<table class="spec-tbl"><thead><tr>';
+      (blk.head || []).forEach(function (th) { t += '<th>' + esc(th) + '</th>'; });
+      t += '</tr></thead><tbody>';
+      (blk.rows || []).forEach(function (row, ri) {
+        t += '<tr>';
+        row.forEach(function (cv, ci) {
+          if (editing) t += cell('td', 'editable', ' contenteditable="true" spellcheck="false" data-path="' + base + '.rows.' + ri + '.' + ci + '"', esc(cv));
+          else t += cell('td', 'editable', '', esc(cv));
+        });
+        t += '</tr>';
+      });
+      return t + '</tbody></table>';
+    }
+    return '';
+  }
+
+  /* ---------------- 右侧事件 ---------------- */
+  function bindPrdEvents() {
+    $$('#prd-body [data-toggle-card]').forEach(function (head) {
+      head.addEventListener('click', function () { head.parentNode.classList.toggle('collapsed'); });
+    });
+    $$('#prd-body .fp-card-head .no').forEach(function (no) {
+      no.addEventListener('click', function (e) {
+        e.stopPropagation();
+        locatetoProto(no.parentNode.parentNode.dataset.fpCard);
+      });
+    });
+    var addBtn = $('#prd-body .add-sec');
+    if (addBtn) addBtn.addEventListener('click', addSection);
+
+    $$('#prd-body [data-del-sec]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var parts = b.dataset.delSec.split('.');
+        var mi = +parts[0], si = +parts[1];
+        if (!window.confirm('删除章节「' + DATA.menus[mi].sections[si].title + '」？')) return;
+        DATA.menus[mi].sections.splice(si, 1);
+        scheduleSave();
+        renderPrd(currentMenu);
+      });
+    });
+  }
+
+  function addSection() {
+    var name = window.prompt('新章节标题', '补充说明');
+    if (!name) return;
+    var menu = findMenu(currentMenu);
+    menu.sections = menu.sections || [];
+    menu.sections.push({
+      type: 'custom',
+      title: name,
+      blocks: [{ type: 'para', text: '在这里补充内容，编辑态下可直接修改。' }]
+    });
+    scheduleSave();
+    renderPrd(currentMenu);
+    var secs = $$('#prd .sec');
+    if (secs.length) secs[secs.length - 1].scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  /* ---------------- 气泡 / 定位 ---------------- */
+  function buildBubbles() {
+    $$('#proto [data-fp]').forEach(function (el) {
+      var exists = false;
+      for (var i = 0; i < el.children.length; i++) {
+        if (el.children[i].classList && el.children[i].classList.contains('fp-bubble')) { exists = true; break; }
+      }
+      if (exists) return;
+
+      var b = document.createElement('span');
+      b.className = 'fp-bubble';
+      b.textContent = el.dataset.fp;
+      b.title = '定位到功能点 ' + el.dataset.fp + ' 的需求说明';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        locatetoCard(el.dataset.fp);
+      });
+      el.appendChild(b);
+    });
+    requestAnimationFrame(placeBubbles);
+  }
+
+  /* 气泡防裁切：贴边元素自动翻到另一侧，两侧都不够才收进内侧 */
+  function placeBubbles() {
+    var page = $('#proto .page.active');
+    if (!page) return;
+    var host = $('.phone-body', page);
+    if (!host) return;
+    var hr = host.getBoundingClientRect();
+    if (!hr.width) return;
+
+    $$('.screen.active [data-fp]', page).forEach(function (el) {
+      var b = null;
+      for (var i = 0; i < el.children.length; i++) {
+        if (el.children[i].classList && el.children[i].classList.contains('fp-bubble')) { b = el.children[i]; break; }
+      }
+      if (!b) return;
+      if (el.getAttribute('data-fp-side')) return; // 手动指定方位的跳过
+
+      var er = el.getBoundingClientRect();
+      if (!er.width) return;
+      if (er.bottom < hr.top || er.top > hr.bottom) return; // 滚出视口
+
+      b.style.left = ''; b.style.right = ''; b.style.top = ''; b.style.bottom = '';
+
+      var GAP = 9, OFF = 7;
+      var rightRoom = hr.right - er.right;
+      var leftRoom = er.left - hr.left;
+      if (rightRoom < GAP + 1) {
+        if (leftRoom >= GAP + 1) { b.style.right = 'auto'; b.style.left = '-' + GAP + 'px'; }
+        else { b.style.right = '2px'; }
+      }
+
+      var topRoom = er.top - hr.top;
+      var bottomRoom = hr.bottom - er.bottom;
+      if (topRoom < OFF + 1) {
+        if (bottomRoom >= OFF + 1) { b.style.top = 'auto'; b.style.bottom = '-' + OFF + 'px'; }
+        else { b.style.top = '2px'; }
+      }
+
+      // 兜底：若仍被某个 overflow 祖先裁切，收进元素内侧
+      if (isClippedByAncestor(b, el)) {
+        b.style.left = 'auto'; b.style.right = '2px';
+        b.style.bottom = 'auto'; b.style.top = '2px';
+        b.style.opacity = '.72';
+      }
+    });
+  }
+
+  /* 检测气泡是否被某个 overflow != visible 的祖先裁掉 */
+  function isClippedByAncestor(b, el) {
+    var br = b.getBoundingClientRect();
+    var p = el.parentNode;
+    while (p && p !== document.body) {
+      var cs = window.getComputedStyle(p);
+      var clipped = cs.overflow !== 'visible' || cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
+      if (clipped) {
+        var pr = p.getBoundingClientRect();
+        if (br.right > pr.right - 1 || br.left < pr.left + 1 || br.bottom > pr.bottom - 1 || br.top < pr.top + 1) {
+          return true;
+        }
+      }
+      p = p.parentNode;
+    }
+    return false;
+  }
+
+  function locatetoCard(fp) {
+    var card = $('#prd-body [data-fp-card="' + fp + '"]');
+    if (!card) { console.warn('未找到功能点 ' + fp + ' 的说明卡片'); return; }
+    card.classList.remove('collapsed');
+    card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    card.classList.remove('target');
+    void card.offsetWidth;
+    card.classList.add('target');
+    setTimeout(function () { card.classList.remove('target'); }, 2600);
+  }
+
+  function locatetoProto(fp) {
+    var el = $('#proto .page.active .screen.active [data-fp="' + fp + '"]')
+      || $('#proto .page.active [data-fp="' + fp + '"]')
+      || $('#proto [data-fp="' + fp + '"]');
+    if (!el) return;
+    // 若元素在隐藏屏里，先切到该屏
+    var parentScreen = el.closest ? el.closest('.screen') : null;
+    if (parentScreen && !parentScreen.classList.contains('active')) {
+      var page = el.closest('.page');
+      $$('.screen', page).forEach(function (s) { s.classList.toggle('active', s === parentScreen); });
+    }
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('fp-flash');
+    void el.offsetWidth;
+    el.classList.add('fp-flash');
+    setTimeout(function () { el.classList.remove('fp-flash'); }, 3000);
+  }
+
+  /* ---------------- 编辑态 ---------------- */
+  function toggleEdit(force) {
+    editing = (typeof force === 'boolean') ? force : !editing;
+    $('#btn-edit').classList.toggle('on', editing);
+    $('#btn-edit').textContent = editing ? '退出编辑' : '编辑需求说明';
+    $('#edit-bar').classList.toggle('show', editing);
+    document.body.classList.toggle('editing', editing);
+    renderPrd(currentMenu);
+  }
+
+  /* ---------------- 导出 ---------------- */
+  function exportHtml() {
+    DATA.__savedAt = Date.now();
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch (e) {}
+
+    var clone = document.documentElement.cloneNode(true);
+    var dataNode = clone.querySelector('#prd-data');
+    dataNode.textContent = JSON.stringify(DATA, null, 2).replace(/<\/script/gi, '<\\/script');
+
+    Array.prototype.forEach.call(clone.querySelectorAll('.fp-bubble'), function (n) { n.parentNode.removeChild(n); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.fp-flash,.target'), function (n) {
+      n.classList.remove('fp-flash'); n.classList.remove('target');
+    });
+    Array.prototype.forEach.call(clone.querySelectorAll('[contenteditable]'), function (n) {
+      n.removeAttribute('contenteditable'); n.removeAttribute('data-path');
+    });
+    Array.prototype.forEach.call(clone.querySelectorAll('.editing'), function (n) { n.classList.remove('editing'); });
+    var eb = clone.querySelector('#edit-bar'); if (eb) eb.classList.remove('show');
+    var lt = clone.querySelector('#local-tip'); if (lt) lt.classList.remove('show');
+    var be = clone.querySelector('#btn-edit');
+    if (be) { be.classList.remove('on'); be.textContent = '编辑需求说明'; }
+
+    var name = (DATA.system || 'system') + '-' + (DATA.platform || 'mobile') + '-' + ts() + '.html';
+    download('<!DOCTYPE html>\n' + clone.outerHTML, name, 'text/html;charset=utf-8');
+  }
+
+  function download(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1200);
+  }
+
+  /* ---------------- 全局事件 ---------------- */
+  function bindGlobal() {
+    $('#proto').addEventListener('click', function (e) {
+      var t = e.target;
+      // 二级屏跳转优先
+      var go = t.closest ? t.closest('[data-screen-go]') : null;
+      if (go) {
+        var page = go.closest('.page');
+        if (page) showScreen(page.dataset.menu, go.dataset.screenGo);
+        return;
+      }
+      var btn = t.closest ? t.closest('[data-menu-btn]') : null;
+      if (btn) { e.preventDefault(); activateMenu(btn.dataset.menuBtn); }
+    });
+
+    document.addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.getAttribute || !el.getAttribute('data-path')) return;
+      var v = (el.innerText || '').replace(/\u00a0/g, ' ').replace(/\n+$/, '');
+      setByPath(DATA, el.getAttribute('data-path'), v);
+      scheduleSave();
+    });
+
+    $('#btn-edit').addEventListener('click', function () { toggleEdit(); });
+    $('#btn-export').addEventListener('click', exportHtml);
+    $('#btn-export-2').addEventListener('click', exportHtml);
+    $('#btn-done').addEventListener('click', function () { toggleEdit(false); });
+    $('#btn-hide').addEventListener('click', togglePrd);
+    $('#toggle-prd').addEventListener('click', togglePrd);
+
+    $('#btn-discard-local').addEventListener('click', function () {
+      if (!window.confirm('丢弃本机修改并重新载入 HTML 文件里的版本？')) return;
+      try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      location.reload();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && editing) toggleEdit(false);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportHtml(); }
+    });
+
+    window.addEventListener('resize', function () { requestAnimationFrame(placeBubbles); });
+  }
+
+  function togglePrd() {
+    var hidden = document.body.classList.toggle('prd-hidden');
+    $('#btn-hide').textContent = hidden ? '‹ 需求说明' : '隐藏需求说明 ›';
+    $('#toggle-prd').textContent = hidden ? '‹ 需求说明' : '隐藏需求说明 ›';
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+})();
+</script>
+</body>
+</html>
